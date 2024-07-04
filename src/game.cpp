@@ -30,7 +30,6 @@
 #include "server.h"
 #include "spectators.h"
 #include "spells.h"
-#include "storeinbox.h"
 #include "talkaction.h"
 #include "weapons.h"
 

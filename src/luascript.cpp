@@ -32,7 +32,6 @@
 #include "script.h"
 #include "spectators.h"
 #include "spells.h"
-#include "storeinbox.h"
 #include "teleport.h"
 #include "weapons.h"
 
