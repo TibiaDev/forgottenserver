@@ -222,8 +222,8 @@ private:
 	void sendPodiumWindow(const Item* item);
 
 	void sendUpdatedVIPStatus(uint32_t guid, VipStatus_t newStatus);
-	void sendVIP(uint32_t guid, const std::string& name, const std::string& description, uint32_t icon, bool notify,
-	             VipStatus_t status);
+	void sendVIP(uint32_t guid, const std::string& name, VipStatus_t status);
+
 	void sendVIPEntries();
 
 	void sendItemClasses();
@@ -233,6 +233,7 @@ private:
 
 	void sendFightModes();
 
+	void sendWorldLight(LightInfo lightInfo);
 	void sendCreatureLight(const Creature* creature);
 
 	void sendCreatureSquare(const Creature* creature, SquareColor_t color);

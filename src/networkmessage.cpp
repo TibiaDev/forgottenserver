@@ -97,25 +97,7 @@ void NetworkMessage::addItem(uint16_t id, uint8_t count)
 		addByte(count);
 	} else if (it.isSplash() || it.isFluidContainer()) {
 		addByte(fluidMap[count & 7]);
-	} else if (it.isContainer()) {
-		addByte(0x00); // assigned loot container icon
-		addByte(0x00); // quiver ammo count
-	} else if (it.classification > 0) {
-		addByte(0x00); // item tier (0-10)
-	} else if (it.showClientCharges) {
-		add<uint32_t>(it.charges);
-		addByte(0x00); // boolean (is brand new)
-	} else if (it.showClientDuration) {
-		add<uint32_t>(it.decayTimeMin);
-		addByte(0x00); // boolean (is brand new)
-	}
-
-	if (it.isPodium()) {
-		add<uint16_t>(0); // looktype
-		add<uint16_t>(0); // lookmount
-		addByte(2);       // direction
-		addByte(0x01);    // is visible (bool)
-	}
+	} 
 }
 
 void NetworkMessage::addItem(const Item* item)
@@ -128,65 +110,6 @@ void NetworkMessage::addItem(const Item* item)
 		addByte(std::min<uint16_t>(0xFF, item->getItemCount()));
 	} else if (it.isSplash() || it.isFluidContainer()) {
 		addByte(fluidMap[item->getFluidType() & 7]);
-	} else if (it.classification > 0) {
-		addByte(0x00); // item tier (0-10)
-	}
-
-	if (it.showClientCharges) {
-		add<uint32_t>(item->getCharges());
-		addByte(0); // boolean (is brand new)
-	} else if (it.showClientDuration) {
-		add<uint32_t>(item->getDuration() / 1000);
-		addByte(0); // boolean (is brand new)
-	}
-
-	if (it.isContainer()) {
-		addByte(0x00); // assigned loot container icon
-		// quiver ammo count
-		const Container* container = item->getContainer();
-		if (container && it.weaponType == WEAPON_QUIVER) {
-			addByte(0x01);
-			add<uint32_t>(container->getAmmoCount());
-		} else {
-			addByte(0x00);
-		}
-	}
-
-	// display outfit on the podium
-	if (it.isPodium()) {
-		const Podium* podium = item->getPodium();
-		const Outfit_t& outfit = podium->getOutfit();
-
-		// add outfit
-		if (podium->hasFlag(PODIUM_SHOW_OUTFIT)) {
-			add<uint16_t>(outfit.lookType);
-			if (outfit.lookType != 0) {
-				addByte(outfit.lookHead);
-				addByte(outfit.lookBody);
-				addByte(outfit.lookLegs);
-				addByte(outfit.lookFeet);
-				addByte(outfit.lookAddons);
-			}
-		} else {
-			add<uint16_t>(0);
-		}
-
-		// add mount
-		if (podium->hasFlag(PODIUM_SHOW_MOUNT)) {
-			add<uint16_t>(outfit.lookMount);
-			if (outfit.lookMount != 0) {
-				addByte(outfit.lookMountHead);
-				addByte(outfit.lookMountBody);
-				addByte(outfit.lookMountLegs);
-				addByte(outfit.lookMountFeet);
-			}
-		} else {
-			add<uint16_t>(0);
-		}
-
-		addByte(podium->getDirection());
-		addByte(podium->hasFlag(PODIUM_SHOW_PLATFORM) ? 0x01 : 0x00);
-		return;
 	}
 }
 
