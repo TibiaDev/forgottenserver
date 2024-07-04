@@ -11,7 +11,6 @@
 #include "inbox.h"
 #include "iomap.h"
 #include "spectators.h"
-#include "storeinbox.h"
 
 extern Game g_game;
 
