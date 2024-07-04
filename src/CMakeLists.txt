@@ -49,7 +49,6 @@ set(tfs_SRC
 	${CMAKE_CURRENT_LIST_DIR}/outputmessage.cpp
 	${CMAKE_CURRENT_LIST_DIR}/party.cpp
 	${CMAKE_CURRENT_LIST_DIR}/player.cpp
-	${CMAKE_CURRENT_LIST_DIR}/podium.cpp
 	${CMAKE_CURRENT_LIST_DIR}/position.cpp
 	${CMAKE_CURRENT_LIST_DIR}/protocol.cpp
 	${CMAKE_CURRENT_LIST_DIR}/protocolgame.cpp
@@ -64,7 +63,6 @@ set(tfs_SRC
 	${CMAKE_CURRENT_LIST_DIR}/signals.cpp
 	${CMAKE_CURRENT_LIST_DIR}/spawn.cpp
 	${CMAKE_CURRENT_LIST_DIR}/spells.cpp
-	${CMAKE_CURRENT_LIST_DIR}/storeinbox.cpp
 	${CMAKE_CURRENT_LIST_DIR}/talkaction.cpp
 	${CMAKE_CURRENT_LIST_DIR}/tasks.cpp
 	${CMAKE_CURRENT_LIST_DIR}/teleport.cpp
@@ -136,7 +134,6 @@ set(tfs_HDR
 	${CMAKE_CURRENT_LIST_DIR}/outputmessage.h
 	${CMAKE_CURRENT_LIST_DIR}/party.h
 	${CMAKE_CURRENT_LIST_DIR}/player.h
-	${CMAKE_CURRENT_LIST_DIR}/podium.h
 	${CMAKE_CURRENT_LIST_DIR}/position.h
 	${CMAKE_CURRENT_LIST_DIR}/protocolgame.h
 	${CMAKE_CURRENT_LIST_DIR}/protocol.h
@@ -153,7 +150,6 @@ set(tfs_HDR
 	${CMAKE_CURRENT_LIST_DIR}/spawn.h
 	${CMAKE_CURRENT_LIST_DIR}/spectators.h
 	${CMAKE_CURRENT_LIST_DIR}/spells.h
-	${CMAKE_CURRENT_LIST_DIR}/storeinbox.h
 	${CMAKE_CURRENT_LIST_DIR}/talkaction.h
 	${CMAKE_CURRENT_LIST_DIR}/tasks.h
 	${CMAKE_CURRENT_LIST_DIR}/teleport.h

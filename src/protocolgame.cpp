@@ -19,9 +19,7 @@
 #include "outfit.h"
 #include "outputmessage.h"
 #include "player.h"
-#include "podium.h"
 #include "scheduler.h"
-#include "storeinbox.h"
 
 extern CreatureEvents* g_creatureEvents;
 extern Chat* g_chat;
@@ -600,9 +598,6 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 		case 0x85:
 			parseRotateItem(msg);
 			break;
-		case 0x86:
-			parseEditPodiumRequest(msg);
-			break;
 		case 0x87:
 			parseCloseContainer(msg);
 			break;
@@ -614,9 +609,6 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 			break;
 		case 0x8A:
 			parseHouseWindow(msg);
-			break;
-		case 0x8B:
-			parseWrapItem(msg);
 			break;
 		case 0x8C:
 			parseLookAt(msg);
@@ -762,9 +754,6 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 			// case 0xFE: break; // store window history 2
 
 		default:
-			g_dispatcher.addTask([=, playerID = player->getID(), msg = new NetworkMessage(msg)]() {
-				g_game.parsePlayerNetworkMessage(playerID, recvbyte, msg);
-			});
 			break;
 	}
 
@@ -1083,8 +1072,6 @@ void ProtocolGame::parseSetOutfit(NetworkMessage& msg)
 		newOutfit.lookMountLegs = msg.getByte();
 		newOutfit.lookMountFeet = msg.getByte();
 		// player->? (open store?)
-
-		// Podium interaction
 	} else if (outfitType == 2) {
 		Position pos = msg.getPosition();
 		uint16_t spriteId = msg.get<uint16_t>();
@@ -1095,23 +1082,7 @@ void ProtocolGame::parseSetOutfit(NetworkMessage& msg)
 		newOutfit.lookMountLegs = msg.getByte();
 		newOutfit.lookMountFeet = msg.getByte();
 		Direction direction = static_cast<Direction>(msg.getByte());
-		bool podiumVisible = msg.getByte() == 1;
-
-		// apply to podium
-		g_dispatcher.addTask(DISPATCHER_TASK_EXPIRATION, [=, playerID = player->getID()]() {
-			g_game.playerEditPodium(playerID, newOutfit, pos, stackpos, spriteId, podiumVisible, direction);
-		});
 	}
-}
-
-void ProtocolGame::parseEditPodiumRequest(NetworkMessage& msg)
-{
-	Position pos = msg.getPosition();
-	uint16_t spriteId = msg.get<uint16_t>();
-	uint8_t stackpos = msg.getByte();
-	g_dispatcher.addTask(DISPATCHER_TASK_EXPIRATION, [=, playerID = player->getID()]() {
-		g_game.playerRequestEditPodium(playerID, pos, stackpos, spriteId);
-	});
 }
 
 void ProtocolGame::parseUseItem(NetworkMessage& msg)
@@ -1292,16 +1263,6 @@ void ProtocolGame::parseHouseWindow(NetworkMessage& msg)
 	auto text = msg.getString();
 	g_dispatcher.addTask([=, playerID = player->getID(), text = std::string{text}]() {
 		g_game.playerUpdateHouseWindow(playerID, doorId, id, text);
-	});
-}
-
-void ProtocolGame::parseWrapItem(NetworkMessage& msg)
-{
-	Position pos = msg.getPosition();
-	uint16_t spriteId = msg.get<uint16_t>();
-	uint8_t stackpos = msg.getByte();
-	g_dispatcher.addTask(DISPATCHER_TASK_EXPIRATION, [=, playerID = player->getID()]() {
-		g_game.playerWrapItem(playerID, pos, stackpos, spriteId);
 	});
 }
 
@@ -3169,142 +3130,6 @@ void ProtocolGame::sendOutfitWindow()
 	msg.addByte(0x00); // Try outfit mode (?)
 	msg.addByte(mounted ? 0x01 : 0x00);
 	msg.addByte(player->randomizeMount ? 0x01 : 0x00);
-	writeToOutputBuffer(msg);
-}
-
-void ProtocolGame::sendPodiumWindow(const Item* item)
-{
-	if (!item) {
-		return;
-	}
-
-	const Podium* podium = item->getPodium();
-	if (!podium) {
-		return;
-	}
-
-	const Tile* tile = item->getTile();
-	if (!tile) {
-		return;
-	}
-
-	int32_t stackpos = tile->getThingIndex(item);
-
-	// read podium outfit
-	Outfit_t podiumOutfit = podium->getOutfit();
-	Outfit_t playerOutfit = player->getDefaultOutfit();
-	bool isEmpty = podiumOutfit.lookType == 0 && podiumOutfit.lookMount == 0;
-
-	if (podiumOutfit.lookType == 0) {
-		// copy player outfit
-		podiumOutfit.lookType = playerOutfit.lookType;
-		podiumOutfit.lookHead = playerOutfit.lookHead;
-		podiumOutfit.lookBody = playerOutfit.lookBody;
-		podiumOutfit.lookLegs = playerOutfit.lookLegs;
-		podiumOutfit.lookFeet = playerOutfit.lookFeet;
-		podiumOutfit.lookAddons = playerOutfit.lookAddons;
-	}
-
-	if (podiumOutfit.lookMount == 0) {
-		// copy player mount
-		podiumOutfit.lookMount = playerOutfit.lookMount;
-		podiumOutfit.lookMountHead = playerOutfit.lookMountHead;
-		podiumOutfit.lookMountBody = playerOutfit.lookMountBody;
-		podiumOutfit.lookMountLegs = playerOutfit.lookMountLegs;
-		podiumOutfit.lookMountFeet = playerOutfit.lookMountFeet;
-	}
-
-	// fetch player outfits
-	const auto& outfits = Outfits::getInstance().getOutfits(player->getSex());
-	if (outfits.size() == 0) {
-		player->sendCancelMessage(RETURNVALUE_NOTPOSSIBLE);
-		return;
-	}
-
-	// add GM outfit for staff members
-	std::vector<ProtocolOutfit> protocolOutfits;
-	if (player->isAccessPlayer()) {
-		protocolOutfits.emplace_back("Gamemaster", 75, 0);
-	}
-
-	// fetch player addons info
-	for (const Outfit& outfit : outfits) {
-		uint8_t addons;
-		if (!player->getOutfitAddons(outfit, addons)) {
-			continue;
-		}
-
-		protocolOutfits.emplace_back(outfit.name, outfit.lookType, addons);
-	}
-
-	// select first outfit available when the one from podium is not unlocked
-	if (!player->canWear(podiumOutfit.lookType, 0)) {
-		podiumOutfit.lookType = outfits.front().lookType;
-	}
-
-	// fetch player mounts
-	std::vector<const Mount*> mounts;
-	for (const Mount& mount : g_game.mounts.getMounts()) {
-		if (player->hasMount(&mount)) {
-			mounts.push_back(&mount);
-		}
-	}
-
-	// packet header
-	NetworkMessage msg;
-	msg.addByte(0xC8);
-
-	// current outfit
-	msg.add<uint16_t>(podiumOutfit.lookType);
-	msg.addByte(podiumOutfit.lookHead);
-	msg.addByte(podiumOutfit.lookBody);
-	msg.addByte(podiumOutfit.lookLegs);
-	msg.addByte(podiumOutfit.lookFeet);
-	msg.addByte(podiumOutfit.lookAddons);
-
-	// current mount
-	msg.add<uint16_t>(podiumOutfit.lookMount);
-	msg.addByte(podiumOutfit.lookMountHead);
-	msg.addByte(podiumOutfit.lookMountBody);
-	msg.addByte(podiumOutfit.lookMountLegs);
-	msg.addByte(podiumOutfit.lookMountFeet);
-
-	// current familiar (not used in podium mode)
-	msg.add<uint16_t>(0);
-
-	// available outfits
-	msg.add<uint16_t>(protocolOutfits.size());
-	for (const ProtocolOutfit& outfit : protocolOutfits) {
-		msg.add<uint16_t>(outfit.lookType);
-		msg.addString(outfit.name);
-		msg.addByte(outfit.addons);
-		msg.addByte(0x00); // mode: 0x00 - available, 0x01 store (requires U32 store offerId), 0x02 golden outfit
-		                   // tooltip (hardcoded)
-	}
-
-	// available mounts
-	msg.add<uint16_t>(mounts.size());
-	for (const Mount* mount : mounts) {
-		msg.add<uint16_t>(mount->clientId);
-		msg.addString(mount->name);
-		msg.addByte(0x00); // mode: 0x00 - available, 0x01 store (requires U32 store offerId)
-	}
-
-	// available familiars (not used in podium mode)
-	msg.add<uint16_t>(0);
-
-	msg.addByte(0x05); // "set outfit" window mode (5 = podium)
-	msg.addByte((isEmpty && playerOutfit.lookMount != 0) || podium->hasFlag(PODIUM_SHOW_MOUNT)
-	                ? 0x01
-	                : 0x00); // "mount" checkbox
-	msg.add<uint16_t>(0);    // unknown
-	msg.addPosition(item->getPosition());
-	msg.add<uint16_t>(item->getClientID());
-	msg.addByte(stackpos);
-
-	msg.addByte(podium->hasFlag(PODIUM_SHOW_PLATFORM) ? 0x01 : 0x00); // is platform visible
-	msg.addByte(0x01);                                                // "outfit" checkbox, ignored by the client
-	msg.addByte(podium->getDirection());                              // outfit direction
 	writeToOutputBuffer(msg);
 }
 

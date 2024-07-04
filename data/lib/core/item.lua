@@ -30,10 +30,6 @@ function Item.isTeleport(self)
 	return false
 end
 
-function Item.isPodium(self)
-	return false
-end
-
 function Item.isTile(self)
 	return false
 end
@@ -475,44 +471,6 @@ do
 		-- primary attributes parenthesis
 		if #descriptions > 0 then
 			response[#response + 1] = string.format(" (%s)", table.concat(descriptions, ", "))
-		end
-
-		-- podium description
-		if not isVirtual and itemType:isPodium() then
-			local outfit = item:getOutfit()
-			local hasOutfit = item:hasFlag(PODIUM_SHOW_OUTFIT)
-			local hasMount = item:hasFlag(PODIUM_SHOW_MOUNT)
-			if outfit then
-				local podiumParts = {}
-				local outfitType = Outfit(outfit.lookType)
-				if outfitType then
-					if hasOutfit then
-						podiumParts[#podiumParts + 1] = string.format("%s outfit", outfitType.name)
-					end
-
-					-- search mount
-					local mountName = getMountNameByLookType(outfit.lookMount)
-					if mountName and hasMount then
-						podiumParts[#podiumParts + 1] = string.format("%s mount", mountName)
-					end
-				else
-					-- search mount
-					local mountName = getMountNameByLookType(outfit.lookMount)
-					local isEnabled = mountName and hasMount
-					if not mountName then
-						mountName = getMountNameByLookType(outfit.lookType)
-						isEnabled = mountName and hasOutfit
-					end
-
-					if mountName and isEnabled then
-						podiumParts[#podiumParts + 1] = string.format("%s mount", mountName)
-					end
-				end
-
-				if #podiumParts > 0 then
-					response[#response + 1] = string.format(" displaying the %s", table.concat(podiumParts, " on the "))
-				end
-			end
 		end
 
 		-- charges and duration

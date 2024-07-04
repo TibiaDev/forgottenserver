@@ -530,10 +530,6 @@ bool Spell::playerSpellCheck(Player* player) const
 		return false;
 	}
 
-	if (!g_events->eventPlayerOnSpellCheck(player, this)) {
-		return false;
-	}
-
 	if ((aggressive || pzLock) && (range < 1 || (range > 0 && !player->getAttackedCreature())) &&
 	    player->getSkull() == SKULL_BLACK) {
 		player->sendCancelMessage(RETURNVALUE_NOTPOSSIBLE);

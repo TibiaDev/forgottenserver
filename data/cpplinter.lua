@@ -266,15 +266,6 @@ Container = {}
 ---@field setDestination fun(self: Teleport, position: Position)
 Teleport = {}
 
----@class Podium : Item
----@field getOutfit fun(self: Podium): Outfit
----@field setOutfit fun(self: Podium, outfit: Outfit)
----@field hasFlag fun(self: Podium, flag: number): boolean
----@field setFlag fun(self: Podium, flag: number)
----@field getDirection fun(self: Podium): number
----@field setDirection fun(self: Podium, direction: number)
-Podium = {}
-
 ---@class Creature : Thing
 ---@field create fun(): Creature
 ---@field __eq fun(self: Creature, other: Creature): boolean
@@ -439,7 +430,6 @@ Creature = {}
 ---@field hasOutfit fun(self: Player, outfitId: number, addon?: number): boolean
 ---@field canWearOutfit fun(self: Player, outfitId: number, addonId?: number): boolean
 ---@field sendOutfitWindow fun(self: Player)
----@field sendEditPodium fun(self: Player, item: Item)
 ---@field addMount fun(self: Player, mountId: number)
 ---@field removeMount fun(self: Player, mountId: number)
 ---@field hasMount fun(self: Player, mountId: number): boolean
@@ -1124,10 +1114,7 @@ Weapon = {}
 ---@field onGainExperience fun(player:Player, source?:Creature, exp:integer, rawExp:integer, sendText:boolean):integer
 ---@field onLoseExperience fun(player:Player, exp:integer):integer
 ---@field onGainSkillTries fun(player:Player, skill:integer, tries:integer, artificial?:boolean):integer
----@field onNetworkMessage fun(player:Player, recvByte:integer, msg:NetworkMessage):nil
----@field onUpdateInventory fun(player:Player, item:Item, slot:integer, equip?:boolean):nil
 ---@field onRotateItem fun(player:Player, item:Item)
----@field onSpellCheck fun(player:Player, spell:Spell):boolean
 ---@field onDropLoot fun(monster:Monster, corpse?:Container):nil
 ---@field onSpawn fun(monster:Monster, position:Position, startup:boolean, artificial:boolean):nil
 ---@field onReload fun(player:Player, reloadType:integer):nil
@@ -1165,10 +1152,7 @@ EventCallback = Event()
 ---@field onGainExperience boolean
 ---@field onLoseExperience boolean
 ---@field onGainSkillTries boolean
----@field onNetworkMessage boolean
----@field onUpdateInventory boolean
 ---@field onRotateItem boolean
----@field onSpellCheck boolean
 ---@field onDropLoot boolean
 ---@field onSpawn boolean
 ---@field onReload boolean
@@ -1570,10 +1554,6 @@ ExperienceRateType = {BASE = 1, LOW_LEVEL = 2, BONUS = 3, STAMINA = 4}
 
 GUEST_LIST = 0x100
 SUBOWNER_LIST = 0x101
-
-PODIUM_SHOW_PLATFORM = 0 -- show the platform below the outfit
-PODIUM_SHOW_OUTFIT = 1   -- show outfit
-PODIUM_SHOW_MOUNT = 2     -- show mount
 
 DIRECTION_NORTH = 0
 DIRECTION_EAST = 1

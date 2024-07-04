@@ -87,6 +87,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>$(ProjectName)-$(Platform)</TargetName>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(SolutionDir)..\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -225,7 +226,6 @@
     <ClCompile Include="..\src\outputmessage.cpp" />
     <ClCompile Include="..\src\party.cpp" />
     <ClCompile Include="..\src\player.cpp" />
-    <ClCompile Include="..\src\podium.cpp" />
     <ClCompile Include="..\src\position.cpp" />
     <ClCompile Include="..\src\protocol.cpp" />
     <ClCompile Include="..\src\protocolgame.cpp" />
@@ -239,7 +239,6 @@
     <ClCompile Include="..\src\signals.cpp" />
     <ClCompile Include="..\src\spawn.cpp" />
     <ClCompile Include="..\src\spells.cpp" />
-    <ClCompile Include="..\src\storeinbox.cpp" />
     <ClCompile Include="..\src\protocolstatus.cpp" />
     <ClCompile Include="..\src\talkaction.cpp" />
     <ClCompile Include="..\src\tasks.cpp" />
@@ -316,7 +315,6 @@
     <ClInclude Include="..\src\outputmessage.h" />
     <ClInclude Include="..\src\party.h" />
     <ClInclude Include="..\src\player.h" />
-    <ClInclude Include="..\src\podium.h" />
     <ClInclude Include="..\src\position.h" />
     <ClInclude Include="..\src\protocol.h" />
     <ClInclude Include="..\src\protocolgame.h" />
@@ -332,7 +330,6 @@
     <ClInclude Include="..\src\spawn.h" />
     <ClInclude Include="..\src\spectators.h" />
     <ClInclude Include="..\src\spells.h" />
-    <ClInclude Include="..\src\storeinbox.h" />
     <ClInclude Include="..\src\protocolstatus.h" />
     <ClInclude Include="..\src\talkaction.h" />
     <ClInclude Include="..\src\tasks.h" />

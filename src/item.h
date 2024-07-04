@@ -15,7 +15,6 @@ class Door;
 class MagicField;
 class Mailbox;
 class Player;
-class Podium;
 class Teleport;
 class TrashHolder;
 
@@ -85,14 +84,14 @@ enum AttrTypes_t
 	ATTR_SHOOTRANGE = 33,
 	ATTR_CUSTOM_ATTRIBUTES = 34,
 	ATTR_DECAYTO = 35,
-	ATTR_WRAPID = 36,
-	ATTR_STOREITEM = 37,
+	//ATTR_WRAPID = 36,
+	//ATTR_STOREITEM = 37,
 	ATTR_ATTACK_SPEED = 38,
-	ATTR_OPENCONTAINER = 39,
-	ATTR_PODIUMOUTFIT = 40,
+	//ATTR_OPENCONTAINER = 39,
+	//ATTR_PODIUMOUTFIT = 40,
 	// ATTR_TIER = 41, // mapeditor
-	ATTR_REFLECT = 42,
-	ATTR_BOOST = 43,
+	//ATTR_REFLECT = 42,
+	//ATTR_BOOST = 43,
 };
 
 enum Attr_ReadValue
@@ -463,8 +462,7 @@ private:
 	    ITEM_ATTRIBUTE_ATTACK | ITEM_ATTRIBUTE_DEFENSE | ITEM_ATTRIBUTE_EXTRADEFENSE | ITEM_ATTRIBUTE_ARMOR |
 	    ITEM_ATTRIBUTE_HITCHANCE | ITEM_ATTRIBUTE_SHOOTRANGE | ITEM_ATTRIBUTE_OWNER | ITEM_ATTRIBUTE_DURATION |
 	    ITEM_ATTRIBUTE_DECAYSTATE | ITEM_ATTRIBUTE_CORPSEOWNER | ITEM_ATTRIBUTE_CHARGES | ITEM_ATTRIBUTE_FLUIDTYPE |
-	    ITEM_ATTRIBUTE_DOORID | ITEM_ATTRIBUTE_DECAYTO | ITEM_ATTRIBUTE_WRAPID | ITEM_ATTRIBUTE_STOREITEM |
-	    ITEM_ATTRIBUTE_ATTACK_SPEED | ITEM_ATTRIBUTE_OPENCONTAINER;
+	    ITEM_ATTRIBUTE_DOORID | ITEM_ATTRIBUTE_DECAYTO | ITEM_ATTRIBUTE_ATTACK_SPEED;
 	const static uint32_t stringAttributeTypes = ITEM_ATTRIBUTE_DESCRIPTION | ITEM_ATTRIBUTE_TEXT |
 	                                             ITEM_ATTRIBUTE_WRITER | ITEM_ATTRIBUTE_NAME | ITEM_ATTRIBUTE_ARTICLE |
 	                                             ITEM_ATTRIBUTE_PLURALNAME;
@@ -514,8 +512,6 @@ public:
 	virtual const MagicField* getMagicField() const { return nullptr; }
 	virtual BedItem* getBed() { return nullptr; }
 	virtual const BedItem* getBed() const { return nullptr; }
-	virtual Podium* getPodium() { return nullptr; }
-	virtual const Podium* getPodium() const { return nullptr; }
 
 	const std::string& getStrAttr(itemAttrTypes type) const
 	{
@@ -687,21 +683,6 @@ public:
 		return static_cast<ItemDecayState_t>(getIntAttr(ITEM_ATTRIBUTE_DECAYSTATE));
 	}
 
-	int32_t getDecayTimeMin() const
-	{
-		if (hasAttribute(ITEM_ATTRIBUTE_DURATION_MIN)) {
-			return getIntAttr(ITEM_ATTRIBUTE_DURATION_MIN);
-		}
-		return items[id].decayTimeMin;
-	}
-	int32_t getDecayTimeMax() const
-	{
-		if (hasAttribute(ITEM_ATTRIBUTE_DURATION_MAX)) {
-			return getIntAttr(ITEM_ATTRIBUTE_DURATION_MAX);
-		}
-		return items[id].decayTimeMax;
-	}
-
 	void setDecayTo(int32_t decayTo) { setIntAttr(ITEM_ATTRIBUTE_DECAYTO, decayTo); }
 	int32_t getDecayTo() const
 	{
@@ -822,18 +803,8 @@ public:
 		const ItemType& it = items[id];
 		return it.rotatable && it.rotateTo;
 	}
-	bool isPodium() const { return items[id].isPodium(); }
 	bool hasWalkStack() const { return items[id].walkStack; }
-	bool isSupply() const { return items[id].isSupply(); }
 
-	void setStoreItem(bool storeItem) { setIntAttr(ITEM_ATTRIBUTE_STOREITEM, static_cast<int64_t>(storeItem)); }
-	bool isStoreItem() const
-	{
-		if (hasAttribute(ITEM_ATTRIBUTE_STOREITEM)) {
-			return getIntAttr(ITEM_ATTRIBUTE_STOREITEM) == 1;
-		}
-		return items[id].storeItem;
-	}
 	const std::string& getName() const
 	{
 		if (hasAttribute(ITEM_ATTRIBUTE_NAME)) {
@@ -876,8 +847,7 @@ public:
 	void setUniqueId(uint16_t n);
 
 	void setDefaultDuration();
-	uint32_t getDefaultDurationMin() const { return items[id].decayTimeMin * 1000; }
-	uint32_t getDefaultDurationMax() const { return items[id].decayTimeMax * 1000; }
+	uint32_t getDefaultDuration() const { return items[id].decayTime * 1000; }
 	bool canDecay() const;
 
 	virtual bool canRemove() const { return true; }

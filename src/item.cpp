@@ -11,7 +11,6 @@
 #include "game.h"
 #include "house.h"
 #include "mailbox.h"
-#include "podium.h"
 #include "teleport.h"
 #include "trashholder.h"
 
@@ -53,8 +52,6 @@ Item* Item::CreateItem(const uint16_t type, uint16_t count /*= 0*/)
 			newItem = new Mailbox(type);
 		} else if (it.isBed()) {
 			newItem = new BedItem(type);
-		} else if (it.isPodium()) {
-			newItem = new Podium(type);
 		} else {
 			newItem = new Item(type, count);
 		}
@@ -238,7 +235,7 @@ void Item::setID(uint16_t newid)
 	id = newid;
 
 	const ItemType& it = Item::items[newid];
-	uint32_t newDuration = normal_random(it.decayTimeMin, it.decayTimeMax) * 1000;
+	uint32_t newDuration = it.decayTime * 1000;
 
 	if (newDuration == 0 && !it.stopTime && it.decayTo < 0) {
 		removeAttribute(ITEM_ATTRIBUTE_DECAYSTATE);
@@ -566,75 +563,6 @@ Attr_ReadValue Item::readAttr(AttrTypes_t attr, PropStream& propStream)
 			break;
 		}
 
-		case ATTR_WRAPID: {
-			uint16_t wrapId;
-			if (!propStream.read<uint16_t>(wrapId)) {
-				return ATTR_READ_ERROR;
-			}
-
-			setIntAttr(ITEM_ATTRIBUTE_WRAPID, wrapId);
-			break;
-		}
-
-		case ATTR_STOREITEM: {
-			uint8_t storeItem;
-			if (!propStream.read<uint8_t>(storeItem)) {
-				return ATTR_READ_ERROR;
-			}
-
-			setIntAttr(ITEM_ATTRIBUTE_STOREITEM, storeItem);
-			break;
-		}
-
-		case ATTR_OPENCONTAINER: {
-			uint8_t openContainer;
-			if (!propStream.read<uint8_t>(openContainer)) {
-				return ATTR_READ_ERROR;
-			}
-
-			setIntAttr(ITEM_ATTRIBUTE_OPENCONTAINER, openContainer);
-			break;
-		}
-
-		case ATTR_REFLECT: {
-			uint16_t size;
-			if (!propStream.read<uint16_t>(size)) {
-				return ATTR_READ_ERROR;
-			}
-
-			for (uint16_t i = 0; i < size; ++i) {
-				CombatType_t combatType;
-				Reflect reflect;
-
-				if (!propStream.read<CombatType_t>(combatType) || !propStream.read<uint16_t>(reflect.percent) ||
-				    !propStream.read<uint16_t>(reflect.chance)) {
-					return ATTR_READ_ERROR;
-				}
-
-				getAttributes()->reflect[combatType] = reflect;
-			}
-			break;
-		}
-
-		case ATTR_BOOST: {
-			uint16_t size;
-			if (!propStream.read<uint16_t>(size)) {
-				return ATTR_READ_ERROR;
-			}
-
-			for (uint16_t i = 0; i < size; ++i) {
-				CombatType_t combatType;
-				uint16_t percent;
-
-				if (!propStream.read<CombatType_t>(combatType) || !propStream.read<uint16_t>(percent)) {
-					return ATTR_READ_ERROR;
-				}
-
-				getAttributes()->boostPercent[combatType] = percent;
-			}
-			break;
-		}
-
 		// these should be handled through derived classes If these are called then something has changed in the
 		// items.xml since the map was saved just read the values
 
@@ -664,14 +592,6 @@ Attr_ReadValue Item::readAttr(AttrTypes_t attr, PropStream& propStream)
 
 		case ATTR_SLEEPSTART: {
 			if (!propStream.skip(4)) {
-				return ATTR_READ_ERROR;
-			}
-			break;
-		}
-
-		// Podium class
-		case ATTR_PODIUMOUTFIT: {
-			if (!propStream.skip(15)) {
 				return ATTR_READ_ERROR;
 			}
 			break;
@@ -857,21 +777,6 @@ void Item::serializeAttr(PropWriteStream& propWriteStream) const
 		propWriteStream.write<int32_t>(getIntAttr(ITEM_ATTRIBUTE_DECAYTO));
 	}
 
-	if (hasAttribute(ITEM_ATTRIBUTE_WRAPID)) {
-		propWriteStream.write<uint8_t>(ATTR_WRAPID);
-		propWriteStream.write<uint16_t>(getIntAttr(ITEM_ATTRIBUTE_WRAPID));
-	}
-
-	if (hasAttribute(ITEM_ATTRIBUTE_STOREITEM)) {
-		propWriteStream.write<uint8_t>(ATTR_STOREITEM);
-		propWriteStream.write<uint8_t>(getIntAttr(ITEM_ATTRIBUTE_STOREITEM));
-	}
-
-	if (hasAttribute(ITEM_ATTRIBUTE_OPENCONTAINER)) {
-		propWriteStream.write<uint8_t>(ATTR_OPENCONTAINER);
-		propWriteStream.write<uint8_t>(getIntAttr(ITEM_ATTRIBUTE_OPENCONTAINER));
-	}
-
 	if (hasAttribute(ITEM_ATTRIBUTE_CUSTOM)) {
 		const ItemAttributes::CustomAttributeMap* customAttrMap = attributes->getCustomAttributeMap();
 		propWriteStream.write<uint8_t>(ATTR_CUSTOM_ATTRIBUTES);
@@ -882,31 +787,6 @@ void Item::serializeAttr(PropWriteStream& propWriteStream) const
 
 			// Serializing value type and value
 			entry.second.serialize(propWriteStream);
-		}
-	}
-
-	if (attributes) {
-		const auto& reflects = attributes->reflect;
-		if (!reflects.empty()) {
-			propWriteStream.write<uint8_t>(ATTR_REFLECT);
-			propWriteStream.write<uint16_t>(reflects.size());
-
-			for (const auto& reflect : reflects) {
-				propWriteStream.write<CombatType_t>(reflect.first);
-				propWriteStream.write<uint16_t>(reflect.second.percent);
-				propWriteStream.write<uint16_t>(reflect.second.chance);
-			}
-		}
-
-		const auto& boosts = attributes->boostPercent;
-		if (!boosts.empty()) {
-			propWriteStream.write<uint8_t>(ATTR_BOOST);
-			propWriteStream.write<uint16_t>(boosts.size());
-
-			for (const auto& boost : boosts) {
-				propWriteStream.write<CombatType_t>(boost.first);
-				propWriteStream.write<uint16_t>(boost.second);
-			}
 		}
 	}
 }
@@ -1052,11 +932,7 @@ void Item::setUniqueId(uint16_t n)
 
 void Item::setDefaultDuration()
 {
-	uint32_t duration = getDefaultDurationMin();
-	if (uint32_t durationMax = getDefaultDurationMax()) {
-		duration = normal_random(duration, durationMax);
-	}
-
+	uint32_t duration = getDefaultDuration();
 	if (duration != 0) {
 		setDuration(duration);
 	}
@@ -1068,7 +944,7 @@ bool Item::canDecay() const
 		return false;
 	}
 
-	if (getDecayTo() < 0 || (getDecayTimeMin() == 0 && getDecayTimeMax() == 0)) {
+	if (getDecayTo() < 0) {
 		return false;
 	}
 
@@ -1259,7 +1135,7 @@ bool Item::hasMarketAttributes() const
 			}
 		} else if (attr.type == ITEM_ATTRIBUTE_DURATION) {
 			uint32_t duration = static_cast<uint32_t>(attr.value.integer);
-			if (duration <= getDefaultDurationMin()) {
+			if (duration <= getDefaultDuration()) {
 				return false;
 			}
 		} else {

@@ -368,7 +368,6 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result)
 
 	// load inventory items
 	ItemMap itemMap;
-	std::map<uint8_t, Container*> openContainersList;
 
 	if ((result = db.storeQuery(fmt::format(
 	         "SELECT `pid`, `sid`, `itemtype`, `count`, `attributes` FROM `player_items` WHERE `player_id` = {:d} ORDER BY `sid` DESC",
@@ -379,15 +378,6 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result)
 			const std::pair<Item*, int32_t>& pair = it->second;
 			Item* item = pair.first;
 			int32_t pid = pair.second;
-
-			Container* itemContainer = item->getContainer();
-			if (itemContainer) {
-				uint8_t cid = item->getIntAttr(ITEM_ATTRIBUTE_OPENCONTAINER);
-				if (cid > 0) {
-					openContainersList.emplace(cid, itemContainer);
-				}
-			}
-
 			if (pid >= CONST_SLOT_FIRST && pid <= CONST_SLOT_LAST) {
 				player->internalAddThing(pid, item);
 			} else {
@@ -402,11 +392,6 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result)
 				}
 			}
 		}
-	}
-
-	for (auto& it : openContainersList) {
-		player->addContainer(it.first - 1, it.second);
-		player->onSendContainer(it.second);
 	}
 
 	// load depot items
@@ -484,8 +469,8 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result)
 			Item* item = pair.first;
 			int32_t pid = pair.second;
 
-			if (pid >= 0 && pid < 100) {
-				player->getStoreInbox()->internalAddThing(item);
+			if (pid >= CONST_SLOT_FIRST && pid <= CONST_SLOT_LAST) {
+				player->internalAddThing(item);
 			} else {
 				ItemMap::const_iterator it2 = itemMap.find(pid);
 
@@ -547,33 +532,12 @@ bool IOLoginData::saveItems(const Player* player, const ItemBlockList& itemList,
 	containers.reserve(32);
 
 	int32_t runningId = 100;
-	const auto& openContainers = player->getOpenContainers();
 
 	Database& db = Database::getInstance();
 	for (const auto& it : itemList) {
 		int32_t pid = it.first;
 		Item* item = it.second;
 		++runningId;
-
-		if (Container* container = item->getContainer()) {
-			if (container->getIntAttr(ITEM_ATTRIBUTE_OPENCONTAINER)) {
-				container->setIntAttr(ITEM_ATTRIBUTE_OPENCONTAINER, 0);
-			}
-
-			if (!openContainers.empty()) {
-				for (const auto& its : openContainers) {
-					auto openContainer = its.second;
-					auto opcontainer = openContainer.container;
-
-					if (opcontainer == container) {
-						container->setIntAttr(ITEM_ATTRIBUTE_OPENCONTAINER, static_cast<int64_t>(its.first) + 1);
-						break;
-					}
-				}
-			}
-
-			containers.emplace_back(container, runningId);
-		}
 
 		propWriteStream.clear();
 		item->serializeAttr(propWriteStream);
@@ -596,22 +560,6 @@ bool IOLoginData::saveItems(const Player* player, const ItemBlockList& itemList,
 			Container* subContainer = item->getContainer();
 			if (subContainer) {
 				containers.emplace_back(subContainer, runningId);
-
-				if (subContainer->getIntAttr(ITEM_ATTRIBUTE_OPENCONTAINER)) {
-					subContainer->setIntAttr(ITEM_ATTRIBUTE_OPENCONTAINER, 0);
-				}
-
-				if (!openContainers.empty()) {
-					for (const auto& it : openContainers) {
-						auto openContainer = it.second;
-						auto opcontainer = openContainer.container;
-
-						if (opcontainer == subContainer) {
-							subContainer->setIntAttr(ITEM_ATTRIBUTE_OPENCONTAINER, it.first + 1);
-							break;
-						}
-					}
-				}
 			}
 
 			propWriteStream.clear();
@@ -812,41 +760,6 @@ bool IOLoginData::savePlayer(Player* player)
 		return false;
 	}
 
-	// save inbox items
-	if (!db.executeQuery(fmt::format("DELETE FROM `player_inboxitems` WHERE `player_id` = {:d}", player->getGUID()))) {
-		return false;
-	}
-
-	DBInsert inboxQuery(
-	    "INSERT INTO `player_inboxitems` (`player_id`, `pid`, `sid`, `itemtype`, `count`, `attributes`) VALUES ");
-	itemList.clear();
-
-	for (Item* item : player->getInbox()->getItemList()) {
-		itemList.emplace_back(0, item);
-	}
-
-	if (!saveItems(player, itemList, inboxQuery, propWriteStream)) {
-		return false;
-	}
-
-	// save store inbox items
-	if (!db.executeQuery(
-	        fmt::format("DELETE FROM `player_storeinboxitems` WHERE `player_id` = {:d}", player->getGUID()))) {
-		return false;
-	}
-
-	DBInsert storeInboxQuery(
-	    "INSERT INTO `player_storeinboxitems` (`player_id`, `pid`, `sid`, `itemtype`, `count`, `attributes`) VALUES ");
-	itemList.clear();
-
-	for (Item* item : player->getStoreInbox()->getItemList()) {
-		itemList.emplace_back(0, item);
-	}
-
-	if (!saveItems(player, itemList, storeInboxQuery, propWriteStream)) {
-		return false;
-	}
-
 	if (!db.executeQuery(fmt::format("DELETE FROM `player_storage` WHERE `player_id` = {:d}", player->getGUID()))) {
 		return false;
 	}
@@ -860,40 +773,6 @@ bool IOLoginData::savePlayer(Player* player)
 	}
 
 	if (!storageQuery.execute()) {
-		return false;
-	}
-
-	// save outfits & addons
-	if (!db.executeQuery(fmt::format("DELETE FROM `player_outfits` WHERE `player_id` = {:d}", player->getGUID()))) {
-		return false;
-	}
-
-	DBInsert outfitQuery("INSERT INTO `player_outfits` (`player_id`, `outfit_id`, `addons`) VALUES ");
-
-	for (const auto& it : player->outfits) {
-		if (!outfitQuery.addRow(fmt::format("{:d}, {:d}, {:d}", player->getGUID(), it.first, it.second))) {
-			return false;
-		}
-	}
-
-	if (!outfitQuery.execute()) {
-		return false;
-	}
-
-	// save mounts
-	if (!db.executeQuery(fmt::format("DELETE FROM `player_mounts` WHERE `player_id` = {:d}", player->getGUID()))) {
-		return false;
-	}
-
-	DBInsert mountQuery("INSERT INTO `player_mounts` (`player_id`, `mount_id`) VALUES ");
-
-	for (const auto& it : player->mounts) {
-		if (!mountQuery.addRow(fmt::format("{:d}, {:d}", player->getGUID(), it))) {
-			return false;
-		}
-	}
-
-	if (!mountQuery.execute()) {
 		return false;
 	}
 

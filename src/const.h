@@ -448,7 +448,6 @@ enum WeaponType_t : uint8_t
 	WEAPON_DISTANCE,
 	WEAPON_WAND,
 	WEAPON_AMMO,
-	WEAPON_QUIVER,
 };
 
 enum Ammo_t : uint8_t
@@ -652,13 +651,6 @@ enum PlayerFlags : uint64_t
 	PlayerFlag_IsAlwaysPremium = static_cast<uint64_t>(1) << 37,
 	PlayerFlag_IgnoreYellCheck = static_cast<uint64_t>(1) << 38,
 	PlayerFlag_IgnoreSendPrivateCheck = static_cast<uint64_t>(1) << 39,
-};
-
-enum PodiumFlags : uint8_t
-{
-	PODIUM_SHOW_PLATFORM = 0, // show the platform below the outfit
-	PODIUM_SHOW_OUTFIT = 1,   // show outfit
-	PODIUM_SHOW_MOUNT = 2     // show mount
 };
 
 enum ReloadTypes_t : uint8_t
