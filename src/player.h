@@ -184,8 +184,6 @@ public:
 
 	Inbox* getInbox() const { return inbox; }
 
-	StoreInbox* getStoreInbox() const { return storeInbox; }
-
 	uint32_t getClientIcons() const;
 
 	const GuildWarVector& getGuildWarVector() const { return guildWarVector; }
@@ -740,32 +738,6 @@ public:
 			client->sendItems();
 		}
 	}
-	void openSavedContainers();
-	void sendQuiverUpdate(bool sendAll = false)
-	{
-		if (!sendAll) {
-			// update one slot
-			Thing* slotThing = getThing(CONST_SLOT_RIGHT);
-			if (slotThing) {
-				Item* slotItem = slotThing->getItem();
-				if (slotItem && slotItem->getWeaponType() == WEAPON_QUIVER) {
-					sendInventoryItem(CONST_SLOT_RIGHT, slotItem);
-				}
-			}
-		} else {
-			// update all slots
-			std::vector<slots_t> slots = {CONST_SLOT_RIGHT, CONST_SLOT_LEFT, CONST_SLOT_AMMO};
-			for (auto const& slot : slots) {
-				Thing* slotThing = getThing(slot);
-				if (slotThing) {
-					Item* slotItem = slotThing->getItem();
-					if (slotItem && slotItem->getWeaponType() == WEAPON_QUIVER) {
-						sendInventoryItem(slot, slotItem);
-					}
-				}
-			}
-		}
-	}
 
 	// event methods
 	void onUpdateTileItem(const Tile* tile, const Position& pos, const Item* oldItem, const ItemType& oldType,
@@ -1010,12 +982,6 @@ public:
 			client->sendOutfitWindow();
 		}
 	}
-	void sendPodiumWindow(const Item* item)
-	{
-		if (client) {
-			client->sendPodiumWindow(item);
-		}
-	}
 	void sendCloseContainer(uint8_t cid)
 	{
 		if (client) {
@@ -1221,7 +1187,6 @@ private:
 	SchedulerTask* walkTask = nullptr;
 	Town* town = nullptr;
 	Vocation* vocation = nullptr;
-	StoreInbox* storeInbox = nullptr;
 	DepotLocker_ptr depotLocker = nullptr;
 
 	uint32_t inventoryWeight = 0;

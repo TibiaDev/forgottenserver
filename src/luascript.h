@@ -481,15 +481,6 @@ private:
 	static int luaItemHasProperty(lua_State* L);
 	static int luaItemIsLoadedFromMap(lua_State* L);
 
-	static int luaItemSetStoreItem(lua_State* L);
-	static int luaItemIsStoreItem(lua_State* L);
-
-	static int luaItemSetReflect(lua_State* L);
-	static int luaItemGetReflect(lua_State* L);
-
-	static int luaItemSetBoostPercent(lua_State* L);
-	static int luaItemGetBoostPercent(lua_State* L);
-
 	// Container
 	static int luaContainerCreate(lua_State* L);
 
@@ -511,16 +502,6 @@ private:
 
 	static int luaTeleportGetDestination(lua_State* L);
 	static int luaTeleportSetDestination(lua_State* L);
-
-	// Podium
-	static int luaPodiumCreate(lua_State* L);
-
-	static int luaPodiumGetOutfit(lua_State* L);
-	static int luaPodiumSetOutfit(lua_State* L);
-	static int luaPodiumHasFlag(lua_State* L);
-	static int luaPodiumSetFlag(lua_State* L);
-	static int luaPodiumGetDirection(lua_State* L);
-	static int luaPodiumSetDirection(lua_State* L);
 
 	// Creature
 	static int luaCreatureCreate(lua_State* L);
@@ -741,8 +722,6 @@ private:
 	static int luaPlayerCanWearOutfit(lua_State* L);
 	static int luaPlayerSendOutfitWindow(lua_State* L);
 
-	static int luaPlayerSendEditPodium(lua_State* L);
-
 	static int luaPlayerAddMount(lua_State* L);
 	static int luaPlayerRemoveMount(lua_State* L);
 	static int luaPlayerHasMount(lua_State* L);
@@ -786,8 +765,6 @@ private:
 	static int luaPlayerHasChaseMode(lua_State* L);
 	static int luaPlayerHasSecureMode(lua_State* L);
 	static int luaPlayerGetFightMode(lua_State* L);
-
-	static int luaPlayerGetStoreInbox(lua_State* L);
 
 	static int luaPlayerIsNearDepotBox(lua_State* L);
 
@@ -1048,8 +1025,7 @@ private:
 	static int luaItemTypeHasShowDuration(lua_State* L);
 	static int luaItemTypeHasAllowDistRead(lua_State* L);
 	static int luaItemTypeGetWieldInfo(lua_State* L);
-	static int luaItemTypeGetDurationMin(lua_State* L);
-	static int luaItemTypeGetDurationMax(lua_State* L);
+	static int luaItemTypeGetDuration(lua_State* L);
 	static int luaItemTypeGetLevelDoor(lua_State* L);
 	static int luaItemTypeGetRuneSpellName(lua_State* L);
 	static int luaItemTypeGetVocationString(lua_State* L);

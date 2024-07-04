@@ -100,10 +100,6 @@ function ItemType:isSplash()
 	return self:getGroup() == ITEM_GROUP_SPLASH
 end
 
-function ItemType:isPodium()
-	return self:getGroup() == ITEM_GROUP_PODIUM
-end
-
 function ItemType:getWeaponString()
 	local weaponType = self:getWeaponType()
 	local weaponString = "unknown"

@@ -91,7 +91,6 @@ private:
 	// Parse methods
 	void parseAutoWalk(NetworkMessage& msg);
 	void parseSetOutfit(NetworkMessage& msg);
-	void parseEditPodiumRequest(NetworkMessage& msg);
 	void parseSay(NetworkMessage& msg);
 	void parseLookAt(NetworkMessage& msg);
 	void parseLookInBattleList(NetworkMessage& msg);
@@ -113,7 +112,6 @@ private:
 	void parseUpdateContainer(NetworkMessage& msg);
 	void parseTextWindow(NetworkMessage& msg);
 	void parseHouseWindow(NetworkMessage& msg);
-	void parseWrapItem(NetworkMessage& msg);
 
 	void parseLookInShop(NetworkMessage& msg);
 	void parsePlayerPurchase(NetworkMessage& msg);
@@ -218,8 +216,6 @@ private:
 	void sendCombatAnalyzer(CombatType_t type, int32_t amount, DamageAnalyzerImpactType impactType,
 	                        const std::string& target);
 	void sendOutfitWindow();
-
-	void sendPodiumWindow(const Item* item);
 
 	void sendUpdatedVIPStatus(uint32_t guid, VipStatus_t newStatus);
 	void sendVIP(uint32_t guid, const std::string& name, VipStatus_t status);

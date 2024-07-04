@@ -92,10 +92,6 @@ bool Events::load()
 				info.playerOnTradeAccept = event;
 			} else if (methodName == "onTradeCompleted") {
 				info.playerOnTradeCompleted = event;
-			} else if (methodName == "onPodiumRequest") {
-				info.playerOnPodiumRequest = event;
-			} else if (methodName == "onPodiumEdit") {
-				info.playerOnPodiumEdit = event;
 			} else if (methodName == "onMoveItem") {
 				info.playerOnMoveItem = event;
 			} else if (methodName == "onItemMoved") {
@@ -116,14 +112,6 @@ bool Events::load()
 				info.playerOnLoseExperience = event;
 			} else if (methodName == "onGainSkillTries") {
 				info.playerOnGainSkillTries = event;
-			} else if (methodName == "onWrapItem") {
-				info.playerOnWrapItem = event;
-			} else if (methodName == "onInventoryUpdate") {
-				info.playerOnInventoryUpdate = event;
-			} else if (methodName == "onNetworkMessage") {
-				info.playerOnNetworkMessage = event;
-			} else if (methodName == "onSpellCheck") {
-				info.playerOnSpellCheck = event;
 			} else {
 				std::cout << "[Warning - Events::load] Unknown player method: " << methodName << std::endl;
 			}
@@ -1083,67 +1071,6 @@ void Events::eventPlayerOnTradeCompleted(Player* player, Player* target, Item* i
 	return scriptInterface.callVoidFunction(5);
 }
 
-void Events::eventPlayerOnPodiumRequest(Player* player, Item* item)
-{
-	// Player:onPodiumRequest(item) or Player.onPodiumRequest(self, item)
-	if (info.playerOnPodiumRequest == -1) {
-		return;
-	}
-
-	if (!tfs::lua::reserveScriptEnv()) {
-		std::cout << "[Error - Events::eventPlayerOnPodiumRequest] Call stack overflow" << std::endl;
-		return;
-	}
-
-	ScriptEnvironment* env = tfs::lua::getScriptEnv();
-	env->setScriptId(info.playerOnPodiumRequest, &scriptInterface);
-
-	lua_State* L = scriptInterface.getLuaState();
-	scriptInterface.pushFunction(info.playerOnPodiumRequest);
-
-	tfs::lua::pushUserdata(L, player);
-	tfs::lua::setMetatable(L, -1, "Player");
-
-	tfs::lua::pushUserdata(L, item);
-	tfs::lua::setItemMetatable(L, -1, item);
-
-	scriptInterface.callFunction(2);
-}
-
-void Events::eventPlayerOnPodiumEdit(Player* player, Item* item, const Outfit_t& outfit, bool podiumVisible,
-                                     Direction direction)
-{
-	// Player:onPodiumEdit(item, outfit, direction, isVisible) or Player.onPodiumEdit(self, item, outfit, direction,
-	// isVisible)
-	if (info.playerOnPodiumEdit == -1) {
-		return;
-	}
-
-	if (!tfs::lua::reserveScriptEnv()) {
-		std::cout << "[Error - Events::eventPlayerOnPodiumEdit] Call stack overflow" << std::endl;
-		return;
-	}
-
-	ScriptEnvironment* env = tfs::lua::getScriptEnv();
-	env->setScriptId(info.playerOnPodiumEdit, &scriptInterface);
-
-	lua_State* L = scriptInterface.getLuaState();
-	scriptInterface.pushFunction(info.playerOnPodiumEdit);
-
-	tfs::lua::pushUserdata(L, player);
-	tfs::lua::setMetatable(L, -1, "Player");
-
-	tfs::lua::pushUserdata(L, item);
-	tfs::lua::setItemMetatable(L, -1, item);
-
-	tfs::lua::pushOutfit(L, outfit);
-
-	lua_pushnumber(L, direction);
-	lua_pushboolean(L, podiumVisible);
-
-	scriptInterface.callFunction(5);
-}
-
 void Events::eventPlayerOnGainExperience(Player* player, Creature* source, uint64_t& exp, uint64_t rawExp,
                                          bool sendText)
 {
@@ -1252,118 +1179,6 @@ void Events::eventPlayerOnGainSkillTries(Player* player, skills_t skill, uint64_
 	}
 
 	tfs::lua::resetScriptEnv();
-}
-
-void Events::eventPlayerOnWrapItem(Player* player, Item* item)
-{
-	// Player:onWrapItem(item)
-	if (info.playerOnWrapItem == -1) {
-		return;
-	}
-
-	if (!tfs::lua::reserveScriptEnv()) {
-		std::cout << "[Error - Events::eventPlayerOnWrapItem] Call stack overflow" << std::endl;
-		return;
-	}
-
-	ScriptEnvironment* env = tfs::lua::getScriptEnv();
-	env->setScriptId(info.playerOnWrapItem, &scriptInterface);
-
-	lua_State* L = scriptInterface.getLuaState();
-	scriptInterface.pushFunction(info.playerOnWrapItem);
-
-	tfs::lua::pushUserdata(L, player);
-	tfs::lua::setMetatable(L, -1, "Player");
-
-	tfs::lua::pushUserdata(L, item);
-	tfs::lua::setItemMetatable(L, -1, item);
-
-	scriptInterface.callVoidFunction(2);
-}
-
-void Events::eventPlayerOnInventoryUpdate(Player* player, Item* item, slots_t slot, bool equip)
-{
-	// Player:onInventoryUpdate(item, slot, equip)
-	if (info.playerOnInventoryUpdate == -1) {
-		return;
-	}
-
-	if (!tfs::lua::reserveScriptEnv()) {
-		std::cout << "[Error - Events::eventPlayerOnInventoryUpdate] Call stack overflow" << std::endl;
-		return;
-	}
-
-	ScriptEnvironment* env = tfs::lua::getScriptEnv();
-	env->setScriptId(info.playerOnInventoryUpdate, &scriptInterface);
-
-	lua_State* L = scriptInterface.getLuaState();
-	scriptInterface.pushFunction(info.playerOnInventoryUpdate);
-
-	tfs::lua::pushUserdata(L, player);
-	tfs::lua::setMetatable(L, -1, "Player");
-
-	tfs::lua::pushUserdata(L, item);
-	tfs::lua::setItemMetatable(L, -1, item);
-
-	lua_pushnumber(L, slot);
-	tfs::lua::pushBoolean(L, equip);
-
-	scriptInterface.callVoidFunction(4);
-}
-
-void Events::eventPlayerOnNetworkMessage(Player* player, uint8_t recvByte, NetworkMessage* msg)
-{
-	// Player:onNetworkMessage(recvByte, msg)
-	if (info.playerOnNetworkMessage == -1) {
-		return;
-	}
-
-	if (!tfs::lua::reserveScriptEnv()) {
-		std::cout << "[Error - Events::eventPlayerOnNetworkMessage] Call stack overflow" << std::endl;
-		return;
-	}
-
-	ScriptEnvironment* env = tfs::lua::getScriptEnv();
-	env->setScriptId(info.playerOnNetworkMessage, &scriptInterface);
-
-	lua_State* L = scriptInterface.getLuaState();
-	scriptInterface.pushFunction(info.playerOnNetworkMessage);
-
-	tfs::lua::pushUserdata(L, player);
-	tfs::lua::setMetatable(L, -1, "Player");
-
-	lua_pushnumber(L, recvByte);
-
-	tfs::lua::pushUserdata(L, msg);
-	tfs::lua::setMetatable(L, -1, "NetworkMessage");
-
-	scriptInterface.callVoidFunction(3);
-}
-
-bool Events::eventPlayerOnSpellCheck(Player* player, const Spell* spell)
-{
-	// Player:onSpellCheck(spell)
-	if (info.playerOnSpellCheck == -1) {
-		return true;
-	}
-
-	if (!tfs::lua::reserveScriptEnv()) {
-		std::cout << "[Error - Events::eventPlayerOnSpellCheck] Call stack overflow" << std::endl;
-		return false;
-	}
-
-	ScriptEnvironment* env = tfs::lua::getScriptEnv();
-	env->setScriptId(info.playerOnSpellCheck, &scriptInterface);
-
-	lua_State* L = scriptInterface.getLuaState();
-	scriptInterface.pushFunction(info.playerOnSpellCheck);
-
-	tfs::lua::pushUserdata(L, player);
-	tfs::lua::setMetatable(L, -1, "Player");
-
-	tfs::lua::pushSpell(L, *spell);
-
-	return scriptInterface.callFunction(2);
 }
 
 void Events::eventMonsterOnDropLoot(Monster* monster, Container* corpse)

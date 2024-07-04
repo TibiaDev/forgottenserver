@@ -44,13 +44,9 @@ Player::Player(ProtocolGame_ptr p) :
     lastPing(OTSYS_TIME()),
     lastPong(lastPing),
     client(std::move(p)),
-    inbox(new Inbox(ITEM_INBOX)),
-    storeInbox(new StoreInbox(ITEM_STORE_INBOX))
+    inbox(new Inbox(ITEM_INBOX))
 {
 	inbox->incrementReferenceCounter();
-
-	storeInbox->setParent(this);
-	storeInbox->incrementReferenceCounter();
 }
 
 Player::~Player()
@@ -67,9 +63,6 @@ Player::~Player()
 	}
 
 	inbox->decrementReferenceCounter();
-
-	storeInbox->setParent(nullptr);
-	storeInbox->decrementReferenceCounter();
 
 	setWriteItem(nullptr);
 	setEditHouse(nullptr);
@@ -220,8 +213,7 @@ Item* Player::getWeapon(slots_t slot, bool ignoreAmmo) const
 	}
 
 	WeaponType_t weaponType = item->getWeaponType();
-	if (weaponType == WEAPON_NONE || weaponType == WEAPON_SHIELD || weaponType == WEAPON_AMMO ||
-	    weaponType == WEAPON_QUIVER) {
+	if (weaponType == WEAPON_NONE || weaponType == WEAPON_SHIELD || weaponType == WEAPON_AMMO) {
 		return nullptr;
 	}
 
@@ -230,24 +222,7 @@ Item* Player::getWeapon(slots_t slot, bool ignoreAmmo) const
 		if (itemType.ammoType != AMMO_NONE) {
 			Item* ammoItem = inventory[CONST_SLOT_AMMO];
 			if (!ammoItem || ammoItem->getAmmoType() != itemType.ammoType) {
-				// no ammo item was found, search for quiver instead
-				Container* quiver = inventory[CONST_SLOT_RIGHT] ? inventory[CONST_SLOT_RIGHT]->getContainer() : nullptr;
-				if (!quiver || quiver->getWeaponType() != WEAPON_QUIVER) {
-					// no quiver equipped
-					return nullptr;
-				}
-
-				for (ContainerIterator containerItem = quiver->iterator(); containerItem.hasNext();
-				     containerItem.advance()) {
-					if (itemType.ammoType == (*containerItem)->getAmmoType()) {
-						const Weapon* weapon = g_weapons->getWeapon(*containerItem);
-						if (weapon && weapon->ammoCheck(this)) {
-							return *containerItem;
-						}
-					}
-				}
-
-				// no valid ammo was found in quiver
+				// no valid ammo was found
 				return nullptr;
 			}
 			item = ammoItem;
@@ -347,8 +322,7 @@ void Player::getShieldAndWeapon(const Item*& shield, const Item*& weapon) const
 			case WEAPON_NONE:
 				break;
 
-			case WEAPON_SHIELD:
-			case WEAPON_QUIVER: {
+			case WEAPON_SHIELD: {
 				if (!shield || item->getDefense() > shield->getDefense()) {
 					shield = item;
 				}
@@ -468,10 +442,6 @@ void Player::updateInventoryWeight()
 		if (item) {
 			inventoryWeight += item->getWeight();
 		}
-	}
-
-	if (StoreInbox* storeInbox = getStoreInbox()) {
-		inventoryWeight += storeInbox->getWeight();
 	}
 }
 
@@ -1039,47 +1009,6 @@ void Player::sendRemoveContainerItem(const Container* container, uint16_t slot)
 	}
 }
 
-void Player::openSavedContainers()
-{
-	std::map<uint8_t, Container*> openContainersList;
-
-	for (int32_t i = CONST_SLOT_FIRST; i <= CONST_SLOT_LAST; i++) {
-		Item* item = inventory[i];
-		if (!item) {
-			continue;
-		}
-
-		Container* itemContainer = item->getContainer();
-		if (itemContainer) {
-			uint8_t cid = item->getIntAttr(ITEM_ATTRIBUTE_OPENCONTAINER);
-			if (cid > 0) {
-				openContainersList.emplace(cid, itemContainer);
-			}
-			for (ContainerIterator it = itemContainer->iterator(); it.hasNext(); it.advance()) {
-				Container* subContainer = (*it)->getContainer();
-				if (subContainer) {
-					uint8_t subcid = (*it)->getIntAttr(ITEM_ATTRIBUTE_OPENCONTAINER);
-					if (subcid > 0) {
-						openContainersList.emplace(subcid, subContainer);
-					}
-				}
-			}
-		}
-	}
-
-	// fix broken containers when logged in from another location
-	for (uint8_t i = 0; i < 16; i++) {
-		client->sendEmptyContainer(i);
-		client->sendCloseContainer(i);
-	}
-
-	// send actual containers
-	for (auto& it : openContainersList) {
-		addContainer(it.first - 1, it.second);
-		onSendContainer(it.second);
-	}
-}
-
 void Player::onUpdateTileItem(const Tile* tile, const Position& pos, const Item* oldItem, const ItemType& oldType,
                               const Item* newItem, const ItemType& newType)
 {
@@ -1389,7 +1318,6 @@ void Player::onEquipInventory()
 		if (item) {
 			item->startDecaying();
 			g_moveEvents->onPlayerEquip(this, item, static_cast<slots_t>(slot), false);
-			g_events->eventPlayerOnInventoryUpdate(this, item, static_cast<slots_t>(slot), true);
 		}
 	}
 }
@@ -1400,7 +1328,6 @@ void Player::onDeEquipInventory()
 		Item* item = inventory[slot];
 		if (item) {
 			g_moveEvents->onPlayerDeEquip(this, item, static_cast<slots_t>(slot));
-			g_events->eventPlayerOnInventoryUpdate(this, item, static_cast<slots_t>(slot), false);
 		}
 	}
 }
@@ -2421,10 +2348,6 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 		return RETURNVALUE_CANNOTPICKUP;
 	}
 
-	if (item->isStoreItem()) {
-		return RETURNVALUE_ITEMCANNOTBEMOVEDTHERE;
-	}
-
 	ReturnValue ret = RETURNVALUE_NOTPOSSIBLE;
 
 	const int32_t& slotPosition = item->getSlotPosition();
@@ -2474,18 +2397,13 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 		case CONST_SLOT_RIGHT: {
 			if (slotPosition & SLOTP_RIGHT) {
 				if (!getBoolean(ConfigManager::CLASSIC_EQUIPMENT_SLOTS)) {
-					if (item->getWeaponType() != WEAPON_SHIELD && item->getWeaponType() != WEAPON_QUIVER) {
+					if (item->getWeaponType() != WEAPON_SHIELD) {
 						ret = RETURNVALUE_CANNOTBEDRESSED;
 					} else {
 						const Item* leftItem = inventory[CONST_SLOT_LEFT];
 						if (leftItem) {
 							if ((leftItem->getSlotPosition() | slotPosition) & SLOTP_TWO_HAND) {
-								if (leftItem->getWeaponType() != WEAPON_DISTANCE ||
-								    item->getWeaponType() != WEAPON_QUIVER) {
-									ret = RETURNVALUE_BOTHHANDSNEEDTOBEFREE;
-								} else {
-									ret = RETURNVALUE_NOERROR;
-								}
+								ret = RETURNVALUE_BOTHHANDSNEEDTOBEFREE;
 							} else {
 								ret = RETURNVALUE_NOERROR;
 							}
@@ -2505,7 +2423,7 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 					WeaponType_t type = item->getWeaponType(), leftType = leftItem->getWeaponType();
 
 					if (leftItem->getSlotPosition() & SLOTP_TWO_HAND) {
-						if (leftItem->getWeaponType() != WEAPON_DISTANCE || type != WEAPON_QUIVER) {
+						if (leftItem->getWeaponType() != WEAPON_DISTANCE) {
 							ret = RETURNVALUE_DROPTWOHANDEDITEM;
 						} else {
 							ret = RETURNVALUE_NOERROR;
@@ -2515,8 +2433,7 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 					} else if (leftType == WEAPON_SHIELD && type == WEAPON_SHIELD) {
 						ret = RETURNVALUE_CANONLYUSEONESHIELD;
 					} else if (leftType == WEAPON_NONE || type == WEAPON_NONE || leftType == WEAPON_SHIELD ||
-					           type == WEAPON_SHIELD || leftType == WEAPON_AMMO || type == WEAPON_AMMO ||
-					           leftType == WEAPON_QUIVER || type == WEAPON_QUIVER) {
+					           type == WEAPON_SHIELD || leftType == WEAPON_AMMO || type == WEAPON_AMMO) {
 						ret = RETURNVALUE_NOERROR;
 					} else {
 						ret = RETURNVALUE_CANONLYUSEONEWEAPON;
@@ -2533,10 +2450,10 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 				if (!getBoolean(ConfigManager::CLASSIC_EQUIPMENT_SLOTS)) {
 					WeaponType_t type = item->getWeaponType();
 					const Item* rightItem = inventory[CONST_SLOT_RIGHT];
-					if (type == WEAPON_NONE || type == WEAPON_SHIELD || type == WEAPON_AMMO || type == WEAPON_QUIVER) {
+					if (type == WEAPON_NONE || type == WEAPON_SHIELD || type == WEAPON_AMMO) {
 						ret = RETURNVALUE_CANNOTBEDRESSED;
 					} else if (rightItem && (slotPosition & SLOTP_TWO_HAND)) {
-						if (type != WEAPON_DISTANCE || rightItem->getWeaponType() != WEAPON_QUIVER) {
+						if (type != WEAPON_DISTANCE) {
 							ret = RETURNVALUE_BOTHHANDSNEEDTOBEFREE;
 						} else {
 							ret = RETURNVALUE_NOERROR;
@@ -2547,7 +2464,7 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 				} else if (slotPosition & SLOTP_TWO_HAND) {
 					const Item* rightItem = inventory[CONST_SLOT_RIGHT];
 					if (rightItem && rightItem != item) {
-						if (item->getWeaponType() != WEAPON_DISTANCE || rightItem->getWeaponType() != WEAPON_QUIVER) {
+						if (item->getWeaponType() != WEAPON_DISTANCE) {
 							ret = RETURNVALUE_BOTHHANDSNEEDTOBEFREE;
 						} else {
 							ret = RETURNVALUE_NOERROR;
@@ -2560,7 +2477,7 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 					WeaponType_t type = item->getWeaponType(), rightType = rightItem->getWeaponType();
 
 					if (rightItem->getSlotPosition() & SLOTP_TWO_HAND) {
-						if (type != WEAPON_DISTANCE || rightItem->getWeaponType() != WEAPON_QUIVER) {
+						if (type != WEAPON_DISTANCE) {
 							ret = RETURNVALUE_DROPTWOHANDEDITEM;
 						} else {
 							ret = RETURNVALUE_NOERROR;
@@ -2570,8 +2487,7 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 					} else if (rightType == WEAPON_SHIELD && type == WEAPON_SHIELD) {
 						ret = RETURNVALUE_CANONLYUSEONESHIELD;
 					} else if (rightType == WEAPON_NONE || type == WEAPON_NONE || rightType == WEAPON_SHIELD ||
-					           type == WEAPON_SHIELD || rightType == WEAPON_AMMO || type == WEAPON_AMMO ||
-					           rightType == WEAPON_QUIVER || type == WEAPON_QUIVER) {
+					           type == WEAPON_SHIELD || rightType == WEAPON_AMMO || type == WEAPON_AMMO) {
 						ret = RETURNVALUE_NOERROR;
 					} else {
 						ret = RETURNVALUE_CANONLYUSEONEWEAPON;
@@ -3129,7 +3045,6 @@ void Player::postAddNotification(Thing* thing, const Cylinder* oldParent, int32_
 	if (link == LINK_OWNER) {
 		// calling movement scripts
 		g_moveEvents->onPlayerEquip(this, thing->getItem(), static_cast<slots_t>(index), false);
-		g_events->eventPlayerOnInventoryUpdate(this, thing->getItem(), static_cast<slots_t>(index), true);
 	}
 
 	bool requireListUpdate = false;
@@ -3186,7 +3101,6 @@ void Player::postRemoveNotification(Thing* thing, const Cylinder* newParent, int
 	if (link == LINK_OWNER) {
 		// calling movement scripts
 		g_moveEvents->onPlayerDeEquip(this, thing->getItem(), static_cast<slots_t>(index));
-		g_events->eventPlayerOnInventoryUpdate(this, thing->getItem(), static_cast<slots_t>(index), false);
 	}
 
 	bool requireListUpdate = false;
@@ -3211,12 +3125,6 @@ void Player::postRemoveNotification(Thing* thing, const Cylinder* newParent, int
 	}
 
 	if (const Item* item = thing->getItem()) {
-		if (item->isSupply()) {
-			if (const Player* player = item->getHoldingPlayer()) {
-				player->sendSupplyUsed(item->getClientID());
-			}
-		}
-
 		if (const Container* container = item->getContainer()) {
 			if (container->isRemoved() || !getPosition().isInRange(container->getPosition(), 1, 1, 0)) {
 				autoCloseContainers(container);

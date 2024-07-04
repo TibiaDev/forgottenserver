@@ -25,7 +25,6 @@
 #include "npc.h"
 #include "outfit.h"
 #include "party.h"
-#include "podium.h"
 #include "scheduler.h"
 #include "script.h"
 #include "server.h"
@@ -298,10 +297,6 @@ Thing* Game::internalGetThing(Player* player, const Position& pos, int32_t index
 
 	// inventory
 	slots_t slot = static_cast<slots_t>(pos.y);
-	if (slot == CONST_SLOT_STORE_INBOX) {
-		return player->getStoreInbox();
-	}
-
 	return player->getInventoryItem(slot);
 }
 
@@ -1257,11 +1252,6 @@ ReturnValue Game::internalMoveItem(Cylinder* fromCylinder, Cylinder* toCylinder,
 		}
 	}
 
-	// update quiver
-	if (actorPlayer) {
-		actorPlayer->sendQuiverUpdate(getBoolean(ConfigManager::CLASSIC_EQUIPMENT_SLOTS));
-	}
-
 	// we could not move all, inform the player
 	if (item->isStackable() && maxQueryCount < count) {
 		return retMaxCount;
@@ -1790,7 +1780,7 @@ Item* searchForItem(Container* container, uint16_t itemId)
 slots_t getSlotType(const ItemType& it)
 {
 	slots_t slot = CONST_SLOT_RIGHT;
-	if (it.weaponType != WeaponType_t::WEAPON_SHIELD && it.weaponType != WeaponType_t::WEAPON_QUIVER) {
+	if (it.weaponType != WeaponType_t::WEAPON_SHIELD) {
 		int32_t slotPosition = it.slotPosition;
 
 		if (slotPosition & SLOTP_HEAD) {
@@ -2400,7 +2390,7 @@ void Game::playerRotateItem(uint32_t playerId, const Position& pos, uint8_t stac
 	}
 
 	Item* item = thing->getItem();
-	if (!item || item->getClientID() != spriteId || (!item->isRotatable() && !item->isPodium()) ||
+	if (!item || item->getClientID() != spriteId || !item->isRotatable() ||
 	    item->hasAttribute(ITEM_ATTRIBUTE_UNIQUEID)) {
 		player->sendCancelMessage(RETURNVALUE_NOTPOSSIBLE);
 		return;
@@ -2421,12 +2411,7 @@ void Game::playerRotateItem(uint32_t playerId, const Position& pos, uint8_t stac
 		return;
 	}
 
-	if (Podium* podium = item->getPodium()) {
-		podium->setDirection(static_cast<Direction>((podium->getDirection() + 1) % 4));
-		updatePodium(podium);
-	} else {
-		g_events->eventPlayerOnRotateItem(player, item);
-	}
+	g_events->eventPlayerOnRotateItem(player, item);
 }
 
 void Game::playerWriteItem(uint32_t playerId, uint32_t windowTextId, std::string_view text)
@@ -2587,43 +2572,6 @@ void Game::playerUpdateHouseWindow(uint32_t playerId, uint8_t listId, uint32_t w
 	}
 
 	player->setEditHouse(nullptr);
-}
-
-void Game::playerWrapItem(uint32_t playerId, const Position& position, uint8_t stackPos, const uint16_t spriteId)
-{
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
-
-	Thing* thing = internalGetThing(player, position, stackPos, 0, STACKPOS_TOPDOWN_ITEM);
-	if (!thing) {
-		return;
-	}
-
-	Item* item = thing->getItem();
-	if (!item || item->getClientID() != spriteId || !item->hasAttribute(ITEM_ATTRIBUTE_WRAPID) ||
-	    item->hasAttribute(ITEM_ATTRIBUTE_UNIQUEID)) {
-		player->sendCancelMessage(RETURNVALUE_NOTPOSSIBLE);
-		return;
-	}
-
-	if (position.x != 0xFFFF && !position.isInRange(player->getPosition(), 1, 1, 0)) {
-		std::vector<Direction> listDir;
-		if (player->getPathTo(position, listDir, 0, 1, true, true)) {
-			g_dispatcher.addTask([this, playerID = player->getID(), listDir = std::move(listDir)]() {
-				playerAutoWalk(playerID, listDir);
-			});
-			SchedulerTask* task = createSchedulerTask(
-			    RANGE_WRAP_ITEM_INTERVAL, [=, this]() { playerWrapItem(playerId, position, stackPos, spriteId); });
-			player->setNextWalkActionTask(task);
-		} else {
-			player->sendCancelMessage(RETURNVALUE_THEREISNOWAY);
-		}
-		return;
-	}
-
-	g_events->eventPlayerOnWrapItem(player, item);
 }
 
 void Game::playerRequestTrade(uint32_t playerId, const Position& pos, uint8_t stackPos, uint32_t tradePlayerId,
@@ -3367,78 +3315,6 @@ void Game::playerRequestOutfit(uint32_t playerId)
 	}
 
 	player->sendOutfitWindow();
-}
-
-void Game::playerRequestEditPodium(uint32_t playerId, const Position& position, uint8_t stackPos,
-                                   const uint16_t spriteId)
-{
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
-
-	Thing* thing = internalGetThing(player, position, stackPos, 0, STACKPOS_TOPDOWN_ITEM);
-	if (!thing) {
-		return;
-	}
-
-	const ItemType& it = Item::items.getItemIdByClientId(spriteId);
-	if (it.id == 0) {
-		return;
-	}
-
-	Item* item = thing->getItem();
-	if (!item || item->getClientID() != spriteId || it.type != ITEM_TYPE_PODIUM) {
-		player->sendCancelMessage(RETURNVALUE_NOTPOSSIBLE);
-		return;
-	}
-
-	// player has to walk to podium
-	// gm/god can edit instantly
-	if (!player->isAccessPlayer()) {
-		if (position.x != 0xFFFF && !position.isInRange(player->getPosition(), 1, 1, 0)) {
-			std::vector<Direction> listDir;
-			if (player->getPathTo(position, listDir, 0, 1, true, true)) {
-				g_dispatcher.addTask([this, playerID = player->getID(), listDir = std::move(listDir)]() {
-					playerAutoWalk(playerID, listDir);
-				});
-				SchedulerTask* task = createSchedulerTask(
-				    400, [=, this]() { playerRequestEditPodium(playerId, position, stackPos, spriteId); });
-				player->setNextWalkActionTask(task);
-			} else {
-				player->sendCancelMessage(RETURNVALUE_THEREISNOWAY);
-			}
-			return;
-		}
-	}
-
-	g_events->eventPlayerOnPodiumRequest(player, item);
-}
-
-void Game::playerEditPodium(uint32_t playerId, Outfit_t outfit, const Position& position, uint8_t stackPos,
-                            const uint16_t spriteId, bool podiumVisible, Direction direction)
-{
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
-
-	Thing* thing = internalGetThing(player, position, stackPos, 0, STACKPOS_TOPDOWN_ITEM);
-	if (!thing) {
-		return;
-	}
-
-	Item* item = thing->getItem();
-	if (!item) {
-		return;
-	}
-
-	const ItemType& it = Item::items.getItemIdByClientId(spriteId);
-	if (it.id == 0) {
-		return;
-	}
-
-	g_events->eventPlayerOnPodiumEdit(player, item, outfit, podiumVisible, direction);
 }
 
 void Game::playerToggleMount(uint32_t playerId, bool mount)
@@ -5543,16 +5419,6 @@ void Game::parsePlayerExtendedOpcode(uint32_t playerId, uint8_t opcode, const st
 	}
 }
 
-void Game::parsePlayerNetworkMessage(uint32_t playerId, uint8_t recvByte, NetworkMessage* msg)
-{
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
-
-	g_events->eventPlayerOnNetworkMessage(player, recvByte, msg);
-}
-
 std::vector<Item*> Game::getMarketItemList(uint16_t wareId, uint16_t sufficientCount, const Player& player)
 {
 	uint16_t count = 0;
@@ -5757,26 +5623,6 @@ void Game::removeBedSleeper(uint32_t guid)
 	auto it = bedSleepersMap.find(guid);
 	if (it != bedSleepersMap.end()) {
 		bedSleepersMap.erase(it);
-	}
-}
-
-void Game::updatePodium(Item* item)
-{
-	if (!item->getPodium()) {
-		return;
-	}
-
-	Tile* tile = item->getTile();
-	if (!tile) {
-		return;
-	}
-
-	// send to clients
-	SpectatorVec spectators;
-	map.getSpectators(spectators, item->getPosition(), true, true);
-	for (Creature* spectator : spectators) {
-		assert(dynamic_cast<Player*>(spectator) != nullptr);
-		static_cast<Player*>(spectator)->sendUpdateTileItem(tile, item->getPosition(), item);
 	}
 }
 

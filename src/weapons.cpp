@@ -455,7 +455,6 @@ void Weapon::onUsedWeapon(Player* player, Item* item, Tile* destTile) const
 			if (getBoolean(ConfigManager::REMOVE_WEAPON_AMMO)) {
 				player->sendSupplyUsed(item->getClientID());
 				Weapon::decrementItemCount(item);
-				player->sendQuiverUpdate();
 			}
 			break;
 

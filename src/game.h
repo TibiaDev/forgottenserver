@@ -347,7 +347,6 @@ public:
 	void playerBrowseField(uint32_t playerId, const Position& pos);
 	void playerSeekInContainer(uint32_t playerId, uint8_t containerId, uint16_t index);
 	void playerUpdateHouseWindow(uint32_t playerId, uint8_t listId, uint32_t windowTextId, const std::string& text);
-	void playerWrapItem(uint32_t playerId, const Position& position, uint8_t stackPos, const uint16_t spriteId);
 	void playerRequestTrade(uint32_t playerId, const Position& pos, uint8_t stackPos, uint32_t tradePlayerId,
 	                        uint16_t spriteId);
 	void playerAcceptTrade(uint32_t playerId);
@@ -371,10 +370,6 @@ public:
 	                          bool notify);
 	void playerTurn(uint32_t playerId, Direction dir);
 	void playerRequestOutfit(uint32_t playerId);
-	void playerRequestEditPodium(uint32_t playerId, const Position& position, uint8_t stackPos,
-	                             const uint16_t spriteId);
-	void playerEditPodium(uint32_t playerId, Outfit_t outfit, const Position& position, uint8_t stackPos,
-	                      const uint16_t spriteId, bool podiumVisible, Direction direction);
 	void playerSay(uint32_t playerId, uint16_t channelId, SpeakClasses type, const std::string& receiver,
 	               const std::string& text);
 	void playerChangeOutfit(uint32_t playerId, Outfit_t outfit, bool randomizeMount = false);
@@ -395,7 +390,6 @@ public:
 	void playerAcceptMarketOffer(uint32_t playerId, uint32_t timestamp, uint16_t counter, uint16_t amount);
 
 	void parsePlayerExtendedOpcode(uint32_t playerId, uint8_t opcode, const std::string& buffer);
-	void parsePlayerNetworkMessage(uint32_t playerId, uint8_t recvByte, NetworkMessage* msg);
 
 	std::vector<Item*> getMarketItemList(uint16_t wareId, uint16_t sufficientCount, const Player& player);
 
@@ -475,8 +469,6 @@ public:
 	BedItem* getBedBySleeper(uint32_t guid) const;
 	void setBedSleeper(BedItem* bed, uint32_t guid);
 	void removeBedSleeper(uint32_t guid);
-
-	void updatePodium(Item* item);
 
 	Item* getUniqueItem(uint16_t uniqueId);
 	bool addUniqueItem(uint16_t uniqueId, Item* item);
