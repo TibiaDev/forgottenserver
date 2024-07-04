@@ -75,6 +75,8 @@ SpellGroup_t stringToSpellGroup(const std::string& value);
 
 const std::vector<Direction>& getShuffleDirections();
 
+uint32_t getIPFromString(const std::string& ipString);
+
 namespace tfs {
 
 #if __has_cpp_attribute(__cpp_lib_to_underlying)
