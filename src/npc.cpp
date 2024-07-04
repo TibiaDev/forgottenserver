@@ -177,10 +177,16 @@ int32_t NpcScriptInterface::loadFile(const std::string& file, Npc* npc /* = null
 
 Npc* Npc::createNpc(const std::string& name)
 {
+	auto filepath = "data/npc/" + name + ".xml";
+
+	if (!std::filesystem::exists(filepath)) {
+		return nullptr;
+	}
+
 	auto npcType = Npcs::getNpcType(name);
 	if (!npcType) {
 		npcType = new NpcType();
-		npcType->filename = "data/npc/" + name + ".xml";
+		npcType->filename = filepath;
 		if (!npcType->loadFromXml()) {
 			delete npcType;
 			return nullptr;
