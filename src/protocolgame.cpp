@@ -729,29 +729,6 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 			break;
 		case 0xF3: /* get object info */
 			break;
-		case 0xF4:
-			parseMarketLeave();
-			break;
-		case 0xF5:
-			parseMarketBrowse(msg);
-			break;
-		case 0xF6:
-			parseMarketCreateOffer(msg);
-			break;
-		case 0xF7:
-			parseMarketCancelOffer(msg);
-			break;
-		case 0xF8:
-			parseMarketAcceptOffer(msg);
-			break;
-		case 0xF9:
-			parseModalWindowAnswer(msg);
-			break;
-			// case 0xFA: break; // store window open
-			// case 0xFB: break; // store window click
-			// case 0xFC: break; // store window buy
-			// case 0xFD: break; // store window history 1
-			// case 0xFE: break; // store window history 2
 
 		default:
 			break;

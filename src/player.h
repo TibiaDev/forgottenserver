@@ -1242,14 +1242,11 @@ private:
 
 	bool chaseMode = false;
 	bool secureMode = false;
-	bool inMarket = false;
-	bool wasMounted = false;
 	bool ghostMode = false;
 	bool pzLocked = false;
 	bool isConnecting = false;
 	bool addAttackSkillPoint = false;
 	bool inventoryAbilities[CONST_SLOT_LAST + 1] = {};
-	bool randomizeMount = false;
 
 	static uint32_t playerAutoID;
 	static uint32_t playerIDLimit;
