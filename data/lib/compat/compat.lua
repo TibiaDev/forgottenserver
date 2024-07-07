@@ -532,7 +532,6 @@ function getPlayerDepotItems(cid, depotId) local p = Player(cid) return p and p:
 function getPlayerStamina(cid) local p = Player(cid) return p and p:getStamina() or false end
 function getPlayerSkullType(cid) local p = Player(cid) return p and p:getSkull() or false end
 function getPlayerLossPercent(cid) local p = Player(cid) return p and p:getDeathPenalty() or false end
-function getPlayerMount(cid, mountId) local p = Player(cid) return p and p:hasMount(mountId) or false end
 function getPlayerPremiumDays(cid) local p = Player(cid) return p and p:getPremiumDays() or false end
 function getPlayerBlessing(cid, blessing) local p = Player(cid) return p and p:hasBlessing(blessing) or false end
 function getPlayerFlagValue(cid, flag) local p = Player(cid) return p and p:hasFlag(flag) or false end

@@ -18,7 +18,6 @@
 #include "http/http.h"
 #include "inbox.h"
 #include "iologindata.h"
-#include "iomarket.h"
 #include "items.h"
 #include "monster.h"
 #include "movement.h"
@@ -1973,7 +1972,7 @@ void Game::playerOpenChannel(uint32_t playerId, uint16_t channelId)
 		users = nullptr;
 	}
 
-	player->sendChannel(channel->getId(), channel->getName(), users, invitedUsers);
+	player->sendChannel(channel->getId(), channel->getName());
 }
 
 void Game::playerCloseChannel(uint32_t playerId, uint16_t channelId)
@@ -2030,16 +2029,6 @@ void Game::playerReceivePing(uint32_t playerId)
 	}
 
 	player->receivePing();
-}
-
-void Game::playerReceivePingBack(uint32_t playerId)
-{
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
-
-	player->sendPingBack();
 }
 
 void Game::playerAutoWalk(uint32_t playerId, const std::vector<Direction>& listDir)
@@ -3316,16 +3305,6 @@ void Game::playerRequestOutfit(uint32_t playerId)
 	player->sendOutfitWindow();
 }
 
-void Game::playerToggleMount(uint32_t playerId, bool mount)
-{
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
-
-	player->toggleMount(mount);
-}
-
 void Game::playerChangeOutfit(uint32_t playerId, Outfit_t outfit, bool randomizeMount /* = false*/)
 {
 	if (!getBoolean(ConfigManager::ALLOW_CHANGEOUTFIT)) {
@@ -3337,41 +3316,6 @@ void Game::playerChangeOutfit(uint32_t playerId, Outfit_t outfit, bool randomize
 		return;
 	}
 
-	player->randomizeMount = randomizeMount;
-
-	const Outfit* playerOutfit = Outfits::getInstance().getOutfitByLookType(player->getSex(), outfit.lookType);
-	if (!playerOutfit) {
-		outfit.lookMount = 0;
-	}
-
-	if (outfit.lookMount != 0) {
-		Mount* mount = mounts.getMountByClientID(outfit.lookMount);
-		if (!mount) {
-			return;
-		}
-
-		if (!player->hasMount(mount)) {
-			return;
-		}
-
-		int32_t speedChange = mount->speed;
-		if (player->isMounted()) {
-			Mount* prevMount = mounts.getMountByID(player->getCurrentMount());
-			if (prevMount) {
-				speedChange -= prevMount->speed;
-			}
-		}
-
-		changeSpeed(player, speedChange);
-		player->setCurrentMount(mount->id);
-	} else {
-		if (player->isMounted()) {
-			player->dismount();
-		}
-
-		player->wasMounted = false;
-	}
-
 	if (player->canWear(outfit.lookType, outfit.lookAddons)) {
 		player->defaultOutfit = outfit;
 
@@ -3379,16 +3323,7 @@ void Game::playerChangeOutfit(uint32_t playerId, Outfit_t outfit, bool randomize
 			return;
 		}
 
-		if (player->randomizeMount && player->hasMounts()) {
-			const Mount* mount = mounts.getMountByID(player->getRandomMount());
-			outfit.lookMount = mount->clientId;
-		}
-
 		internalCreatureChangeOutfit(player, outfit);
-	}
-
-	if (player->isMounted()) {
-		player->onChangeZone(player->getZone());
 	}
 }
 
@@ -4030,25 +3965,6 @@ bool Game::combatChangeHealth(Creature* attacker, Creature* target, CombatDamage
 		target->gainHealth(attacker, damage.primary.value);
 		realHealthChange = target->getHealth() - realHealthChange;
 
-		if (attackerPlayer && attackerPlayer != targetPlayer) {
-			attackerPlayer->sendCombatAnalyzer(damage.primary.type, damage.primary.value,
-			                                   DamageAnalyzerImpactType::DEALT, target ? target->getName() : "(other)");
-			if (damage.secondary.type == COMBAT_HEALING) {
-				attackerPlayer->sendCombatAnalyzer(damage.secondary.type, damage.secondary.value,
-				                                   DamageAnalyzerImpactType::DEALT,
-				                                   target ? target->getName() : "(other)");
-			}
-		} else if (targetPlayer) {
-			targetPlayer->sendCombatAnalyzer(damage.primary.type, damage.primary.value,
-			                                 DamageAnalyzerImpactType::HEALING,
-			                                 attacker ? attacker->getName() : "(other)");
-			if (damage.secondary.type == COMBAT_HEALING) {
-				targetPlayer->sendCombatAnalyzer(damage.secondary.type, damage.secondary.value,
-				                                 DamageAnalyzerImpactType::HEALING,
-				                                 attacker ? attacker->getName() : "(other)");
-			}
-		}
-
 		if (realHealthChange > 0 && !target->isInGhostMode()) {
 			auto damageString = fmt::format("{:d} hitpoint{:s}", realHealthChange, realHealthChange != 1 ? "s" : "");
 
@@ -4226,26 +4142,6 @@ bool Game::combatChangeHealth(Creature* attacker, Creature* target, CombatDamage
 					damage.secondary.value = std::max<int32_t>(0, damage.secondary.value + damage.primary.value);
 					damage.primary.value = 0;
 				}
-
-				if (attackerPlayer) {
-					attackerPlayer->sendCombatAnalyzer(damage.primary.type, damage.primary.value,
-					                                   DamageAnalyzerImpactType::DEALT, target->getName());
-					if (damage.secondary.type != COMBAT_NONE) {
-						attackerPlayer->sendCombatAnalyzer(damage.secondary.type, damage.secondary.value,
-						                                   DamageAnalyzerImpactType::DEALT, target->getName());
-					}
-				}
-
-				if (targetPlayer) {
-					targetPlayer->sendCombatAnalyzer(damage.primary.type, manaDamage,
-					                                 DamageAnalyzerImpactType::RECEIVED,
-					                                 attacker ? attacker->getName() : "(other)");
-					if (damage.secondary.type != COMBAT_NONE) {
-						targetPlayer->sendCombatAnalyzer(damage.secondary.type, damage.secondary.value,
-						                                 DamageAnalyzerImpactType::RECEIVED,
-						                                 attacker ? attacker->getName() : "(other)");
-					}
-				}
 			}
 		}
 
@@ -4297,26 +4193,6 @@ bool Game::combatChangeHealth(Creature* attacker, Creature* target, CombatDamage
 			combatGetTypeInfo(damage.secondary.type, target, message.secondary.color, hitEffect);
 			if (hitEffect != CONST_ME_NONE) {
 				addMagicEffect(spectators, targetPos, hitEffect);
-			}
-		}
-
-		if (attackerPlayer) {
-			attackerPlayer->sendCombatAnalyzer(damage.primary.type, damage.primary.value,
-			                                   DamageAnalyzerImpactType::DEALT, target->getName());
-			if (damage.secondary.type != COMBAT_NONE) {
-				attackerPlayer->sendCombatAnalyzer(damage.secondary.type, damage.secondary.value,
-				                                   DamageAnalyzerImpactType::DEALT, target->getName());
-			}
-		}
-
-		if (targetPlayer) {
-			targetPlayer->sendCombatAnalyzer(damage.primary.type, damage.primary.value,
-			                                 DamageAnalyzerImpactType::RECEIVED,
-			                                 attacker ? attacker->getName() : "(other)");
-			if (damage.secondary.type != COMBAT_NONE) {
-				targetPlayer->sendCombatAnalyzer(damage.secondary.type, damage.secondary.value,
-				                                 DamageAnalyzerImpactType::RECEIVED,
-				                                 attacker ? attacker->getName() : "(other)");
 			}
 		}
 
@@ -4601,11 +4477,6 @@ void Game::internalDecayItem(Item* item)
 	if (decayTo > 0) {
 		startDecay(transformItem(item, decayTo));
 	} else {
-		if (const Player* player = item->getHoldingPlayer()) {
-			const ItemType& it = Item::items[item->getID()];
-			player->sendSupplyUsed(it.transformDeEquipTo != 0 ? Item::items[it.transformDeEquipTo].clientId
-			                                                  : item->getClientID());
-		}
 		ReturnValue ret = internalRemoveItem(item);
 		if (ret != RETURNVALUE_NOERROR) {
 			std::cout << "[Debug - Game::internalDecayItem] internalDecayItem failed, error code: "
@@ -4962,14 +4833,14 @@ void Game::playerReportRuleViolation(uint32_t playerId, const std::string& targe
 	g_events->eventPlayerOnReportRuleViolation(player, targetName, reportType, reportReason, comment, translation);
 }
 
-void Game::playerReportBug(uint32_t playerId, const std::string& message, const Position& position, uint8_t category)
+void Game::playerReportBug(uint32_t playerId, const std::string& message)
 {
 	Player* player = getPlayerByID(playerId);
 	if (!player) {
 		return;
 	}
 
-	g_events->eventPlayerOnReportBug(player, message, position, category);
+	g_events->eventPlayerOnReportBug(player, message);
 }
 
 void Game::playerDebugAssert(uint32_t playerId, const std::string& assertLine, const std::string& date,
@@ -4990,422 +4861,6 @@ void Game::playerDebugAssert(uint32_t playerId, const std::string& assertLine, c
 	}
 }
 
-void Game::playerLeaveMarket(uint32_t playerId)
-{
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
-
-	player->setInMarket(false);
-}
-
-void Game::playerBrowseMarket(uint32_t playerId, uint16_t spriteId)
-{
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
-
-	if (!player->isInMarket()) {
-		player->sendMarketEnter();
-	}
-
-	const ItemType& it = Item::items.getItemIdByClientId(spriteId);
-	if (it.id == 0) {
-		return;
-	}
-
-	if (it.wareId == 0) {
-		return;
-	}
-
-	const MarketOfferList& buyOffers = IOMarket::getActiveOffers(MARKETACTION_BUY, it.id);
-	const MarketOfferList& sellOffers = IOMarket::getActiveOffers(MARKETACTION_SELL, it.id);
-	player->sendMarketBrowseItem(it.id, buyOffers, sellOffers);
-	g_events->eventPlayerOnLookInMarket(player, &it);
-}
-
-void Game::playerBrowseMarketOwnOffers(uint32_t playerId)
-{
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
-
-	if (!player->isInMarket()) {
-		return;
-	}
-
-	const MarketOfferList& buyOffers = IOMarket::getOwnOffers(MARKETACTION_BUY, player->getGUID());
-	const MarketOfferList& sellOffers = IOMarket::getOwnOffers(MARKETACTION_SELL, player->getGUID());
-	player->sendMarketBrowseOwnOffers(buyOffers, sellOffers);
-}
-
-void Game::playerBrowseMarketOwnHistory(uint32_t playerId)
-{
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
-
-	if (!player->isInMarket()) {
-		return;
-	}
-
-	const HistoryMarketOfferList& buyOffers = IOMarket::getOwnHistory(MARKETACTION_BUY, player->getGUID());
-	const HistoryMarketOfferList& sellOffers = IOMarket::getOwnHistory(MARKETACTION_SELL, player->getGUID());
-	player->sendMarketBrowseOwnHistory(buyOffers, sellOffers);
-}
-
-void Game::playerCreateMarketOffer(uint32_t playerId, uint8_t type, uint16_t spriteId, uint16_t amount, uint64_t price,
-                                   bool anonymous)
-{
-	if (amount == 0 || amount > 64000) {
-		return;
-	}
-
-	if (price == 0 || price > 999999999999) {
-		return;
-	}
-
-	if (type != MARKETACTION_BUY && type != MARKETACTION_SELL) {
-		return;
-	}
-
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
-
-	if (!player->isInMarket()) {
-		return;
-	}
-
-	if (getBoolean(ConfigManager::MARKET_PREMIUM) && !player->isPremium()) {
-		player->sendTextMessage(MESSAGE_MARKET, "Only premium accounts may create offers for that object.");
-		return;
-	}
-
-	const ItemType& itt = Item::items.getItemIdByClientId(spriteId);
-	if (itt.id == 0 || itt.wareId == 0) {
-		return;
-	}
-
-	const ItemType& it = Item::items.getItemIdByClientId(itt.wareId);
-	if (it.id == 0 || it.wareId == 0) {
-		return;
-	}
-
-	if (!it.stackable && amount > 2000) {
-		return;
-	}
-
-	const uint32_t maxOfferCount = getNumber(ConfigManager::MAX_MARKET_OFFERS_AT_A_TIME_PER_PLAYER);
-	if (maxOfferCount != 0 && IOMarket::getPlayerOfferCount(player->getGUID()) >= maxOfferCount) {
-		return;
-	}
-
-	uint64_t fee = (price / 100.) * amount;
-	if (fee < MIN_MARKET_FEE) {
-		fee = MIN_MARKET_FEE;
-	} else if (fee > MAX_MARKET_FEE) {
-		fee = MAX_MARKET_FEE;
-	}
-
-	if (type == MARKETACTION_SELL) {
-		if (fee > (player->getMoney() + player->bankBalance)) {
-			return;
-		}
-
-		const auto& itemList = getMarketItemList(it.wareId, amount, *player);
-		if (itemList.empty()) {
-			return;
-		}
-
-		if (it.stackable) {
-			uint16_t tmpAmount = amount;
-			for (Item* item : itemList) {
-				uint16_t removeCount = std::min<uint16_t>(tmpAmount, item->getItemCount());
-				tmpAmount -= removeCount;
-				internalRemoveItem(item, removeCount);
-
-				if (tmpAmount == 0) {
-					break;
-				}
-			}
-		} else {
-			for (Item* item : itemList) {
-				internalRemoveItem(item);
-			}
-		}
-
-		const auto debitCash = std::min(player->getMoney(), fee);
-		const auto debitBank = fee - debitCash;
-		removeMoney(player, debitCash);
-		player->bankBalance -= debitBank;
-	} else {
-		uint64_t totalPrice = static_cast<uint64_t>(price) * amount;
-		totalPrice += fee;
-		if (totalPrice > (player->getMoney() + player->bankBalance)) {
-			return;
-		}
-
-		const auto debitCash = std::min(player->getMoney(), totalPrice);
-		const auto debitBank = totalPrice - debitCash;
-		removeMoney(player, debitCash);
-		player->bankBalance -= debitBank;
-	}
-
-	IOMarket::createOffer(player->getGUID(), static_cast<MarketAction_t>(type), it.id, amount, price, anonymous);
-
-	player->sendMarketEnter();
-	const MarketOfferList& buyOffers = IOMarket::getActiveOffers(MARKETACTION_BUY, it.id);
-	const MarketOfferList& sellOffers = IOMarket::getActiveOffers(MARKETACTION_SELL, it.id);
-	player->sendMarketBrowseItem(it.id, buyOffers, sellOffers);
-}
-
-void Game::playerCancelMarketOffer(uint32_t playerId, uint32_t timestamp, uint16_t counter)
-{
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
-
-	if (!player->isInMarket()) {
-		return;
-	}
-
-	MarketOfferEx offer = IOMarket::getOfferByCounter(timestamp, counter);
-	if (offer.id == 0 || offer.playerId != player->getGUID()) {
-		return;
-	}
-
-	if (offer.type == MARKETACTION_BUY) {
-		player->bankBalance += offer.price * offer.amount;
-		player->sendMarketEnter();
-	} else {
-		const ItemType& it = Item::items[offer.itemId];
-		if (it.id == 0) {
-			return;
-		}
-
-		if (it.stackable) {
-			uint16_t tmpAmount = offer.amount;
-			while (tmpAmount > 0) {
-				int32_t stackCount = std::min<int32_t>(ITEM_STACK_SIZE, tmpAmount);
-				Item* item = Item::CreateItem(it.id, stackCount);
-				if (internalAddItem(player->getInbox(), item, INDEX_WHEREEVER, FLAG_NOLIMIT) != RETURNVALUE_NOERROR) {
-					delete item;
-					break;
-				}
-
-				tmpAmount -= stackCount;
-			}
-		} else {
-			int32_t subType;
-			if (it.charges != 0) {
-				subType = it.charges;
-			} else {
-				subType = -1;
-			}
-
-			for (uint16_t i = 0; i < offer.amount; ++i) {
-				Item* item = Item::CreateItem(it.id, subType);
-				if (internalAddItem(player->getInbox(), item, INDEX_WHEREEVER, FLAG_NOLIMIT) != RETURNVALUE_NOERROR) {
-					delete item;
-					break;
-				}
-			}
-		}
-	}
-
-	IOMarket::moveOfferToHistory(offer.id, OFFERSTATE_CANCELLED);
-	offer.amount = 0;
-	offer.timestamp += getNumber(ConfigManager::MARKET_OFFER_DURATION);
-	player->sendMarketCancelOffer(offer);
-	player->sendMarketEnter();
-}
-
-void Game::playerAcceptMarketOffer(uint32_t playerId, uint32_t timestamp, uint16_t counter, uint16_t amount)
-{
-	if (amount == 0 || amount > 64000) {
-		return;
-	}
-
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
-
-	if (!player->isInMarket()) {
-		return;
-	}
-
-	MarketOfferEx offer = IOMarket::getOfferByCounter(timestamp, counter);
-	if (offer.id == 0) {
-		return;
-	}
-
-	uint32_t offerAccountId = IOLoginData::getAccountIdByPlayerId(offer.playerId);
-	if (offerAccountId == player->getAccount()) {
-		player->sendTextMessage(MESSAGE_MARKET, "You cannot accept your own offer.");
-		return;
-	}
-
-	if (amount > offer.amount) {
-		return;
-	}
-
-	const ItemType& it = Item::items[offer.itemId];
-	if (it.id == 0) {
-		return;
-	}
-
-	uint64_t totalPrice = offer.price * amount;
-
-	if (offer.type == MARKETACTION_BUY) {
-		const auto& itemList = getMarketItemList(it.wareId, amount, *player);
-		if (itemList.empty()) {
-			return;
-		}
-
-		Player* buyerPlayer = getPlayerByGUID(offer.playerId);
-		if (!buyerPlayer) {
-			buyerPlayer = new Player(nullptr);
-			if (!IOLoginData::loadPlayerById(buyerPlayer, offer.playerId)) {
-				delete buyerPlayer;
-				return;
-			}
-		}
-
-		if (it.stackable) {
-			uint16_t tmpAmount = amount;
-			for (Item* item : itemList) {
-				uint16_t removeCount = std::min<uint16_t>(tmpAmount, item->getItemCount());
-				tmpAmount -= removeCount;
-				internalRemoveItem(item, removeCount);
-
-				if (tmpAmount == 0) {
-					break;
-				}
-			}
-		} else {
-			for (Item* item : itemList) {
-				internalRemoveItem(item);
-			}
-		}
-
-		player->bankBalance += totalPrice;
-
-		if (it.stackable) {
-			uint16_t tmpAmount = amount;
-			while (tmpAmount > 0) {
-				uint16_t stackCount = std::min<uint16_t>(ITEM_STACK_SIZE, tmpAmount);
-				Item* item = Item::CreateItem(it.id, stackCount);
-				if (internalAddItem(buyerPlayer->getInbox(), item, INDEX_WHEREEVER, FLAG_NOLIMIT) !=
-				    RETURNVALUE_NOERROR) {
-					delete item;
-					break;
-				}
-
-				tmpAmount -= stackCount;
-			}
-		} else {
-			int32_t subType;
-			if (it.charges != 0) {
-				subType = it.charges;
-			} else {
-				subType = -1;
-			}
-
-			for (uint16_t i = 0; i < amount; ++i) {
-				Item* item = Item::CreateItem(it.id, subType);
-				if (internalAddItem(buyerPlayer->getInbox(), item, INDEX_WHEREEVER, FLAG_NOLIMIT) !=
-				    RETURNVALUE_NOERROR) {
-					delete item;
-					break;
-				}
-			}
-		}
-
-		if (buyerPlayer->isOffline()) {
-			IOLoginData::savePlayer(buyerPlayer);
-			delete buyerPlayer;
-		} else {
-			buyerPlayer->onReceiveMail();
-		}
-	} else {
-		if (totalPrice > (player->getMoney() + player->bankBalance)) {
-			return;
-		}
-
-		const auto debitCash = std::min(player->getMoney(), totalPrice);
-		const auto debitBank = totalPrice - debitCash;
-		removeMoney(player, debitCash);
-		player->bankBalance -= debitBank;
-
-		if (it.stackable) {
-			uint16_t tmpAmount = amount;
-			while (tmpAmount > 0) {
-				uint16_t stackCount = std::min<uint16_t>(ITEM_STACK_SIZE, tmpAmount);
-				Item* item = Item::CreateItem(it.id, stackCount);
-				if (internalAddItem(player->getInbox(), item, INDEX_WHEREEVER, FLAG_NOLIMIT) != RETURNVALUE_NOERROR) {
-					delete item;
-					break;
-				}
-
-				tmpAmount -= stackCount;
-			}
-		} else {
-			int32_t subType;
-			if (it.charges != 0) {
-				subType = it.charges;
-			} else {
-				subType = -1;
-			}
-
-			for (uint16_t i = 0; i < amount; ++i) {
-				Item* item = Item::CreateItem(it.id, subType);
-				if (internalAddItem(player->getInbox(), item, INDEX_WHEREEVER, FLAG_NOLIMIT) != RETURNVALUE_NOERROR) {
-					delete item;
-					break;
-				}
-			}
-		}
-
-		Player* sellerPlayer = getPlayerByGUID(offer.playerId);
-		if (sellerPlayer) {
-			sellerPlayer->bankBalance += totalPrice;
-		} else {
-			IOLoginData::increaseBankBalance(offer.playerId, totalPrice);
-		}
-
-		player->onReceiveMail();
-	}
-
-	const int32_t marketOfferDuration = getNumber(ConfigManager::MARKET_OFFER_DURATION);
-
-	IOMarket::appendHistory(player->getGUID(), (offer.type == MARKETACTION_BUY ? MARKETACTION_SELL : MARKETACTION_BUY),
-	                        offer.itemId, amount, offer.price, offer.timestamp + marketOfferDuration,
-	                        OFFERSTATE_ACCEPTEDEX);
-
-	IOMarket::appendHistory(offer.playerId, offer.type, offer.itemId, amount, offer.price,
-	                        offer.timestamp + marketOfferDuration, OFFERSTATE_ACCEPTED);
-
-	offer.amount -= amount;
-
-	if (offer.amount == 0) {
-		IOMarket::deleteOffer(offer.id);
-	} else {
-		IOMarket::acceptOffer(offer.id, amount);
-	}
-
-	player->sendMarketEnter();
-	offer.timestamp += marketOfferDuration;
-	player->sendMarketAcceptOffer(offer);
-}
-
 void Game::parsePlayerExtendedOpcode(uint32_t playerId, uint8_t opcode, const std::string& buffer)
 {
 	Player* player = getPlayerByID(playerId);
@@ -5416,55 +4871,6 @@ void Game::parsePlayerExtendedOpcode(uint32_t playerId, uint8_t opcode, const st
 	for (CreatureEvent* creatureEvent : player->getCreatureEvents(CREATURE_EVENT_EXTENDED_OPCODE)) {
 		creatureEvent->executeExtendedOpcode(player, opcode, buffer);
 	}
-}
-
-std::vector<Item*> Game::getMarketItemList(uint16_t wareId, uint16_t sufficientCount, const Player& player)
-{
-	uint16_t count = 0;
-	std::list<Container*> containers{player.getInbox()};
-
-	for (const auto& chest : player.depotChests) {
-		if (!chest.second->empty()) {
-			containers.push_front(chest.second);
-		}
-	}
-
-	std::vector<Item*> itemList;
-
-	do {
-		Container* container = containers.front();
-		containers.pop_front();
-
-		for (Item* item : container->getItemList()) {
-			Container* containerItem = item->getContainer();
-			if (containerItem && !containerItem->empty()) {
-				containers.push_back(containerItem);
-				continue;
-			}
-
-			const ItemType& itemType = Item::items[item->getID()];
-			if (itemType.wareId != wareId) {
-				continue;
-			}
-
-			if (containerItem && (!itemType.isContainer() || containerItem->capacity() != itemType.maxItems)) {
-				continue;
-			}
-
-			if (!item->hasMarketAttributes()) {
-				continue;
-			}
-
-			itemList.push_back(item);
-
-			count += Item::countByType(item, -1);
-			if (count >= sufficientCount) {
-				return itemList;
-			}
-		}
-	} while (!containers.empty());
-
-	return {};
 }
 
 void Game::forceAddCondition(uint32_t creatureId, Condition* condition)
@@ -5493,10 +4899,6 @@ void Game::sendOfflineTrainingDialog(Player* player)
 	if (!player) {
 		return;
 	}
-
-	if (!player->hasModalWindowOpen(offlineTrainingWindow.id)) {
-		player->sendModalWindow(offlineTrainingWindow);
-	}
 }
 
 void Game::playerAnswerModalWindow(uint32_t playerId, uint32_t modalWindowId, uint8_t button, uint8_t choice)
@@ -5505,12 +4907,6 @@ void Game::playerAnswerModalWindow(uint32_t playerId, uint32_t modalWindowId, ui
 	if (!player) {
 		return;
 	}
-
-	if (!player->hasModalWindowOpen(modalWindowId)) {
-		return;
-	}
-
-	player->onModalWindowHandled(modalWindowId);
 
 	// offline training, hard-coded
 	if (modalWindowId == std::numeric_limits<uint32_t>::max()) {

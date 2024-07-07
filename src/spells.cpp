@@ -1163,7 +1163,6 @@ bool RuneSpell::executeUse(Player* player, Item* item, const Position&, Thing* t
 
 	if (hasCharges && item && getBoolean(ConfigManager::REMOVE_RUNE_CHARGES)) {
 		int32_t newCount = std::max<int32_t>(0, item->getItemCount() - 1);
-		player->sendSupplyUsed(item->getClientID());
 		g_game.transformItem(item, item->getID(), newCount);
 	}
 	return true;

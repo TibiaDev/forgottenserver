@@ -439,7 +439,6 @@ bool Actions::useItemEx(Player* player, const Position& fromPos, const Position&
 {
 	int32_t cooldown = getNumber(ConfigManager::EX_ACTIONS_DELAY_INTERVAL);
 	player->setNextAction(OTSYS_TIME() + cooldown);
-	player->sendUseItemCooldown(cooldown);
 
 	Action* action = getAction(item);
 	if (!action) {
@@ -502,6 +501,13 @@ bool Action::configureEvent(const pugi::xml_node& node)
 	}
 
 	return true;
+}
+
+bool Action::loadFunction(const pugi::xml_attribute& attr, bool)
+{
+	std::cout << "[Warning - Action::loadFunction] Function \"" << attr.as_string() << "\" does not exist."
+	          << std::endl;
+	return false;
 }
 
 ReturnValue Action::canExecuteAction(const Player* player, const Position& toPos)

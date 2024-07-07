@@ -584,8 +584,6 @@ struct CombatDamage
 	bool leeched = false;
 };
 
-using MarketOfferList = std::list<MarketOffer>;
-using HistoryMarketOfferList = std::list<HistoryMarketOffer>;
 using ShopInfoList = std::list<ShopInfo>;
 
 enum MonstersEvent_t : uint8_t

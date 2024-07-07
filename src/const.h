@@ -258,6 +258,7 @@ enum SpeakClasses : uint8_t
 	TALKTYPE_CHANNEL_R1 = 14,       // red - #c text
 	TALKTYPE_PRIVATE_RED_FROM = 15, // @name@text
 	TALKTYPE_PRIVATE_RED_TO = 16,   // @name@text
+	TALKTYPE_CHANNEL_R2 = 17,       // #d
 	TALKTYPE_MONSTER_SAY = 36,
 	TALKTYPE_MONSTER_YELL = 37,
 	TALKTYPE_POTION = 52, // Like MONSTER_SAY but can be disabled in client settings

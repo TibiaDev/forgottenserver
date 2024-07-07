@@ -424,8 +424,6 @@ private:
 	static int luaModalWindowHasPriority(lua_State* L);
 	static int luaModalWindowSetPriority(lua_State* L);
 
-	static int luaModalWindowSendToPlayer(lua_State* L);
-
 	// Item
 	static int luaItemCreate(lua_State* L);
 
@@ -580,11 +578,6 @@ private:
 
 	static int luaCreatureGetZone(lua_State* L);
 
-	static int luaCreatureHasIcon(lua_State* L);
-	static int luaCreatureSetIcon(lua_State* L);
-	static int luaCreatureGetIcon(lua_State* L);
-	static int luaCreatureRemoveIcon(lua_State* L);
-
 	static int luaCreatureGetStorageValue(lua_State* L);
 	static int luaCreatureSetStorageValue(lua_State* L);
 
@@ -717,11 +710,6 @@ private:
 	static int luaPlayerCanWearOutfit(lua_State* L);
 	static int luaPlayerSendOutfitWindow(lua_State* L);
 
-	static int luaPlayerAddMount(lua_State* L);
-	static int luaPlayerRemoveMount(lua_State* L);
-	static int luaPlayerHasMount(lua_State* L);
-	static int luaPlayerToggleMount(lua_State* L);
-
 	static int luaPlayerGetPremiumEndsAt(lua_State* L);
 	static int luaPlayerSetPremiumEndsAt(lua_State* L);
 
@@ -777,8 +765,6 @@ private:
 	static int luaPlayerGetClientLowLevelBonusDisplay(lua_State* L);
 	static int luaPlayerSetClientLowLevelBonusDisplay(lua_State* L);
 
-	static int luaPlayerSendResourceBalance(lua_State* L);
-
 	// Monster
 	static int luaMonsterCreate(lua_State* L);
 
@@ -814,11 +800,6 @@ private:
 
 	static int luaMonsterIsWalkingToSpawn(lua_State* L);
 	static int luaMonsterWalkToSpawn(lua_State* L);
-
-	static int luaMonsterHasIcon(lua_State* L);
-	static int luaMonsterSetIcon(lua_State* L);
-	static int luaMonsterGetIcon(lua_State* L);
-	static int luaMonsterRemoveIcon(lua_State* L);
 
 	// Npc
 	static int luaNpcCreate(lua_State* L);
