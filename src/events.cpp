@@ -84,8 +84,6 @@ bool Events::load()
 				info.playerOnLookInTrade = event;
 			} else if (methodName == "onLookInShop") {
 				info.playerOnLookInShop = event;
-			} else if (methodName == "onLookInMarket") {
-				info.playerOnLookInMarket = event;
 			} else if (methodName == "onTradeRequest") {
 				info.playerOnTradeRequest = event;
 			} else if (methodName == "onTradeAccept") {
@@ -716,33 +714,6 @@ bool Events::eventPlayerOnLookInShop(Player* player, const ItemType* itemType, u
 	return scriptInterface.callFunction(3);
 }
 
-bool Events::eventPlayerOnLookInMarket(Player* player, const ItemType* itemType)
-{
-	// Player:onLookInMarket(itemType) or Player.onLookInMarket(self, itemType)
-	if (info.playerOnLookInMarket == -1) {
-		return true;
-	}
-
-	if (!tfs::lua::reserveScriptEnv()) {
-		std::cout << "[Error - Events::eventPlayerOnLookInMarket] Call stack overflow" << std::endl;
-		return false;
-	}
-
-	ScriptEnvironment* env = tfs::lua::getScriptEnv();
-	env->setScriptId(info.playerOnLookInMarket, &scriptInterface);
-
-	lua_State* L = scriptInterface.getLuaState();
-	scriptInterface.pushFunction(info.playerOnLookInMarket);
-
-	tfs::lua::pushUserdata(L, player);
-	tfs::lua::setMetatable(L, -1, "Player");
-
-	tfs::lua::pushUserdata(L, itemType);
-	tfs::lua::setMetatable(L, -1, "ItemType");
-
-	return scriptInterface.callFunction(2);
-}
-
 ReturnValue Events::eventPlayerOnMoveItem(Player* player, Item* item, uint16_t count, const Position& fromPosition,
                                           const Position& toPosition, Cylinder* fromCylinder, Cylinder* toCylinder)
 {
@@ -891,8 +862,7 @@ void Events::eventPlayerOnReportRuleViolation(Player* player, const std::string&
 	scriptInterface.callVoidFunction(6);
 }
 
-bool Events::eventPlayerOnReportBug(Player* player, const std::string& message, const Position& position,
-                                    uint8_t category)
+bool Events::eventPlayerOnReportBug(Player* player, const std::string& message)
 {
 	// Player:onReportBug(message, position, category)
 	if (info.playerOnReportBug == -1) {
@@ -914,10 +884,8 @@ bool Events::eventPlayerOnReportBug(Player* player, const std::string& message, 
 	tfs::lua::setMetatable(L, -1, "Player");
 
 	tfs::lua::pushString(L, message);
-	tfs::lua::pushPosition(L, position);
-	lua_pushnumber(L, category);
 
-	return scriptInterface.callFunction(4);
+	return scriptInterface.callFunction(2);
 }
 
 void Events::eventPlayerOnRotateItem(Player* player, Item* item)

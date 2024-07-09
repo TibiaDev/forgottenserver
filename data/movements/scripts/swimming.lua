@@ -1,6 +1,6 @@
 local condition = Condition(CONDITION_OUTFIT)
 condition:setOutfit({lookType = 267})
-condition:setTicks(-1)
+-- condition:setTicks(-1)
 
 local conditions = {
 	CONDITION_POISON, CONDITION_FIRE, CONDITION_ENERGY,

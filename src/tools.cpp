@@ -387,75 +387,6 @@ MagicEffectNames magicEffectNames = {
     {"smoke", CONST_ME_SMOKE},
     {"insects", CONST_ME_INSECTS},
     {"dragonhead", CONST_ME_DRAGONHEAD},
-    {"orcshaman", CONST_ME_ORCSHAMAN},
-    {"orcshamanfire", CONST_ME_ORCSHAMAN_FIRE},
-    {"thunder", CONST_ME_THUNDER},
-    {"ferumbras", CONST_ME_FERUMBRAS},
-    {"confettihorizontal", CONST_ME_CONFETTI_HORIZONTAL},
-    {"confettivertical", CONST_ME_CONFETTI_VERTICAL},
-    {"blacksmoke", CONST_ME_BLACKSMOKE},
-    {"redsmoke", CONST_ME_REDSMOKE},
-    {"yellowsmoke", CONST_ME_YELLOWSMOKE},
-    {"greensmoke", CONST_ME_GREENSMOKE},
-    {"purplesmoke", CONST_ME_PURPLESMOKE},
-    {"earlythunder", CONST_ME_EARLY_THUNDER},
-    {"bonecapsule", CONST_ME_RAGIAZ_BONECAPSULE},
-    {"criticaldamage", CONST_ME_CRITICAL_DAMAGE},
-    {"plungingfish", CONST_ME_PLUNGING_FISH},
-    {"bluechain", CONST_ME_BLUECHAIN},
-    {"orangechain", CONST_ME_ORANGECHAIN},
-    {"greenchain", CONST_ME_GREENCHAIN},
-    {"purplechain", CONST_ME_PURPLECHAIN},
-    {"greychain", CONST_ME_GREYCHAIN},
-    {"yellowchain", CONST_ME_YELLOWCHAIN},
-    {"yellowsparkles", CONST_ME_YELLOWSPARKLES},
-    {"faeexplosion", CONST_ME_FAEEXPLOSION},
-    {"faecoming", CONST_ME_FAECOMING},
-    {"faegoing", CONST_ME_FAEGOING},
-    {"bigcloudssinglespace", CONST_ME_BIGCLOUDSSINGLESPACE},
-    {"stonessinglespace", CONST_ME_STONESSINGLESPACE},
-    {"blueghost", CONST_ME_BLUEGHOST},
-    {"pointofinterest", CONST_ME_POINTOFINTEREST},
-    {"mapeffect", CONST_ME_MAPEFFECT},
-    {"pinkspark", CONST_ME_PINKSPARK},
-    {"greenfirework", CONST_ME_FIREWORK_GREEN},
-    {"orangefirework", CONST_ME_FIREWORK_ORANGE},
-    {"purplefirework", CONST_ME_FIREWORK_PURPLE},
-    {"turquoisefirework", CONST_ME_FIREWORK_TURQUOISE},
-    {"thecube", CONST_ME_THECUBE},
-    {"drawink", CONST_ME_DRAWINK},
-    {"prismaticsparkles", CONST_ME_PRISMATICSPARKLES},
-    {"thaian", CONST_ME_THAIAN},
-    {"thaianghost", CONST_ME_THAIANGHOST},
-    {"ghostsmoke", CONST_ME_GHOSTSMOKE},
-    {"floatingblock", CONST_ME_FLOATINGBLOCK},
-    {"block", CONST_ME_BLOCK},
-    {"rooting", CONST_ME_ROOTING},
-    {"ghostlyscratch", CONST_ME_GHOSTLYSCRATCH},
-    {"ghostlybite", CONST_ME_GHOSTLYBITE},
-    {"bigscratching", CONST_ME_BIGSCRATCHING},
-    {"slash", CONST_ME_SLASH},
-    {"bite", CONST_ME_BITE},
-    {"chivalriouschallenge", CONST_ME_CHIVALRIOUSCHALLENGE},
-    {"divinedazzle", CONST_ME_DIVINEDAZZLE},
-    {"electricalspark", CONST_ME_ELECTRICALSPARK},
-    {"purpleteleport", CONST_ME_PURPLETELEPORT},
-    {"redteleport", CONST_ME_REDTELEPORT},
-    {"orangeteleport", CONST_ME_ORANGETELEPORT},
-    {"greyteleport", CONST_ME_GREYTELEPORT},
-    {"lightblueteleport", CONST_ME_LIGHTBLUETELEPORT},
-    {"fatal", CONST_ME_FATAL},
-    {"dodge", CONST_ME_DODGE},
-    {"hourglass", CONST_ME_HOURGLASS},
-    {"fireworksstar", CONST_ME_FIREWORKSSTAR},
-    {"fireworkscircle", CONST_ME_FIREWORKSCIRCLE},
-    {"ferumbras1", CONST_ME_FERUMBRAS_1},
-    {"gazharagoth", CONST_ME_GAZHARAGOTH},
-    {"madmage", CONST_ME_MAD_MAGE},
-    {"horestis", CONST_ME_HORESTIS},
-    {"devovorga", CONST_ME_DEVOVORGA},
-    {"ferumbras2", CONST_ME_FERUMBRAS_2},
-    {"foam", CONST_ME_FOAM},
 };
 
 ShootTypeNames shootTypeNames = {
@@ -500,19 +431,6 @@ ShootTypeNames shootTypeNames = {
     {"smallearth", CONST_ANI_SMALLEARTH},
     {"eartharrow", CONST_ANI_EARTHARROW},
     {"explosion", CONST_ANI_EXPLOSION},
-    {"cake", CONST_ANI_CAKE},
-    {"tarsalarrow", CONST_ANI_TARSALARROW},
-    {"vortexbolt", CONST_ANI_VORTEXBOLT},
-    {"prismaticbolt", CONST_ANI_PRISMATICBOLT},
-    {"crystallinearrow", CONST_ANI_CRYSTALLINEARROW},
-    {"drillbolt", CONST_ANI_DRILLBOLT},
-    {"envenomedarrow", CONST_ANI_ENVENOMEDARROW},
-    {"gloothspear", CONST_ANI_GLOOTHSPEAR},
-    {"simplearrow", CONST_ANI_SIMPLEARROW},
-    {"leafstar", CONST_ANI_LEAFSTAR},
-    {"diamondarrow", CONST_ANI_DIAMONDARROW},
-    {"spectralbolt", CONST_ANI_SPECTRALBOLT},
-    {"royalstar", CONST_ANI_ROYALSTAR},
 };
 
 CombatTypeNames combatTypeNames = {
@@ -1060,6 +978,12 @@ const char* getReturnMessage(ReturnValue value)
 		case RETURNVALUE_YOUNEEDAMAGICITEMTOCASTSPELL:
 			return "You need a magic item to cast this spell.";
 
+		case RETURNVALUE_CANNOTCONJUREITEMHERE:
+			return "You cannot conjure items here.";
+
+		case RETURNVALUE_YOUNEEDTOSPLITYOURSPEARS:
+			return "You need to split your spears first.";
+
 		case RETURNVALUE_NAMEISTOOAMBIGUOUS:
 			return "Player name is ambiguous.";
 
@@ -1071,6 +995,12 @@ const char* getReturnMessage(ReturnValue value)
 
 		case RETURNVALUE_YOUARENOTTHEOWNER:
 			return "You are not the owner.";
+
+		case RETURNVALUE_NOSUCHRAIDEXISTS:
+			return "No such raid exists.";
+
+		case RETURNVALUE_ANOTHERRAIDISALREADYEXECUTING:
+			return "Another raid is already executing.";
 
 		case RETURNVALUE_TRADEPLAYERFARAWAY:
 			return "Trade player is too far away.";

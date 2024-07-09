@@ -458,37 +458,19 @@ function NpcRequirements:checkLevel(player)
     return false
 end
 
--- Initializes the requirements for a player.
----@param player Player: The player to check the requirements for.
----@return boolean: True if the player meets all requirements, false otherwise.
----@return nil|string (optional): The message to send to the player if the requirements are not met.
-function NpcRequirements:init(player)
-    if self.requireOutfit then
-        local outfit = self.requireOutfit
-        if outfit.check and not player:hasOutfit(outfit.outfit1, outfit.addon) and not player:hasOutfit(outfit.outfit2, outfit.addon) then
-            return false, outfit.failResponse
-        elseif not outfit.check and player:hasOutfit(outfit.outfit1, outfit.addon) and player:hasOutfit(outfit.outfit2, outfit.addon) then
-            return false, outfit.failResponse
+    -- Initializes the requirements for a player.
+    ---@param player Player: The player to check the requirements for.
+    ---@return boolean: True if the player meets all requirements, false otherwise.
+    ---@return nil|string (optional): The message to send to the player if the requirements are not met.
+    function NpcRequirements:init(player)
+        if self.requireLearnedSpell then
+            local spell = self.requireLearnedSpell
+            if spell.check and not player:hasLearnedSpell(spell.spell) then
+                return false, spell.failResponse
+            elseif not spell.check and player:hasLearnedSpell(spell.spell) then
+                return false, spell.failResponse
+            end
         end
-    end
-
-    if self.requireMount then
-        local mount = self.requireMount
-        if mount.check and not player:hasMount(mount.mount) then
-            return false, mount.failResponse
-        elseif not mount.check and player:hasMount(mount.mount) then
-            return false, mount.failResponse
-        end
-    end
-
-    if self.requireLearnedSpell then
-        local spell = self.requireLearnedSpell
-        if spell.check and not player:hasLearnedSpell(spell.spell) then
-            return false, spell.failResponse
-        elseif not spell.check and player:hasLearnedSpell(spell.spell) then
-            return false, spell.failResponse
-        end
-    end
 
     if self.requireBlessing then
         local blessing = self.requireBlessing

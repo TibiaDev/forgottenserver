@@ -169,11 +169,6 @@ public:
 	bool isInvisible() const;
 	ZoneType_t getZone() const { return getTile()->getZone(); }
 
-	// creature icons
-	CreatureIconHashMap& getIcons() { return creatureIcons; }
-	const CreatureIconHashMap& getIcons() const { return creatureIcons; }
-	void updateIcons() const;
-
 	// walk functions
 	void startAutoWalk();
 	void startAutoWalk(Direction direction);
@@ -376,7 +371,6 @@ protected:
 	std::list<Creature*> summons;
 	CreatureEventList eventsList;
 	ConditionList conditions;
-	CreatureIconHashMap creatureIcons;
 
 	std::vector<Direction> listWalkDir;
 
@@ -403,7 +397,6 @@ protected:
 
 	Outfit_t currentOutfit;
 	Outfit_t defaultOutfit;
-	uint16_t currentMount;
 
 	Position lastPosition;
 	LightInfo internalLight;

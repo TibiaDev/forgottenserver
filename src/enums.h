@@ -94,29 +94,6 @@ enum VipStatus_t : uint8_t
 	VIPSTATUS_TRAINING = 3
 };
 
-enum MarketAction_t
-{
-	MARKETACTION_BUY = 0,
-	MARKETACTION_SELL = 1,
-};
-
-enum MarketRequest_t
-{
-	MARKETREQUEST_OWN_HISTORY = 1,
-	MARKETREQUEST_OWN_OFFERS = 2,
-	MARKETREQUEST_ITEM = 3,
-};
-
-enum MarketOfferState_t
-{
-	OFFERSTATE_ACTIVE = 0,
-	OFFERSTATE_CANCELLED = 1,
-	OFFERSTATE_EXPIRED = 2,
-	OFFERSTATE_ACCEPTED = 3,
-
-	OFFERSTATE_ACCEPTEDEX = 255,
-};
-
 enum ChannelEvent_t : uint8_t
 {
 	CHANNELEVENT_JOIN = 0,
@@ -190,7 +167,6 @@ enum RaceType_t : uint8_t
 	RACE_UNDEAD,
 	RACE_FIRE,
 	RACE_ENERGY,
-	RACE_INK,
 };
 
 enum CombatType_t : uint16_t
@@ -382,9 +358,6 @@ enum ConditionType_t
 	CONDITION_EXHAUST_COMBAT = 1 << 23, // unused
 	CONDITION_EXHAUST_HEAL = 1 << 24,   // unused
 	CONDITION_PACIFIED = 1 << 25,
-	CONDITION_SPELLCOOLDOWN = 1 << 26,
-	CONDITION_SPELLGROUPCOOLDOWN = 1 << 27,
-	CONDITION_ROOT = 1 << 28,
 	CONDITION_MANASHIELD_BREAKABLE = 1 << 29,
 };
 
@@ -539,11 +512,6 @@ struct Outfit_t
 	uint8_t lookLegs = 0;
 	uint8_t lookFeet = 0;
 	uint8_t lookAddons = 0;
-	uint16_t lookMount = 0;
-	uint8_t lookMountHead = 0;
-	uint8_t lookMountBody = 0;
-	uint8_t lookMountLegs = 0;
-	uint8_t lookMountFeet = 0;
 };
 
 struct LightInfo
@@ -558,80 +526,14 @@ struct ShopInfo
 {
 	uint16_t itemId = 0;
 	int32_t subType = 1;
-	int64_t buyPrice = 0;
-	int64_t sellPrice = 0;
+	uint32_t buyPrice = 0;
+	uint32_t sellPrice = 0;
 	std::string realName = "";
 
 	ShopInfo() = default;
-	ShopInfo(uint16_t itemId, int32_t subType = 0, int64_t buyPrice = 0, int64_t sellPrice = 0,
+	ShopInfo(uint16_t itemId, int32_t subType = 0, uint32_t buyPrice = 0, uint32_t sellPrice = 0,
 	         std::string realName = "") :
 	    itemId(itemId), subType(subType), buyPrice(buyPrice), sellPrice(sellPrice), realName(std::move(realName))
-	{}
-};
-
-struct MarketOffer
-{
-	uint64_t price;
-	uint32_t timestamp;
-	uint16_t amount;
-	uint16_t counter;
-	uint16_t itemId;
-	std::string playerName;
-};
-
-struct MarketOfferEx
-{
-	MarketOfferEx() = default;
-	MarketOfferEx(MarketOfferEx&& other) :
-	    id(other.id),
-	    playerId(other.playerId),
-	    timestamp(other.timestamp),
-	    price(other.price),
-	    amount(other.amount),
-	    counter(other.counter),
-	    itemId(other.itemId),
-	    type(other.type),
-	    playerName(std::move(other.playerName))
-	{}
-
-	uint32_t id;
-	uint32_t playerId;
-	uint32_t timestamp;
-	uint64_t price;
-	uint16_t amount;
-	uint16_t counter;
-	uint16_t itemId;
-	MarketAction_t type;
-	std::string playerName;
-};
-
-struct HistoryMarketOffer
-{
-	uint32_t timestamp;
-	uint64_t price;
-	uint16_t itemId;
-	uint16_t amount;
-	MarketOfferState_t state;
-};
-
-struct MarketStatistics
-{
-	uint32_t numTransactions = 0;
-	uint32_t highestPrice = 0;
-	uint64_t totalPrice = 0;
-	uint32_t lowestPrice = 0;
-};
-
-struct ModalWindow
-{
-	std::list<std::pair<std::string, uint8_t>> buttons, choices;
-	std::string title, message;
-	uint32_t id;
-	uint8_t defaultEnterButton = 0xFF, defaultEscapeButton = 0xFF;
-	bool priority = false;
-
-	ModalWindow(uint32_t id, std::string title, std::string message) :
-	    title(std::move(title)), message(std::move(message)), id(id)
 	{}
 };
 
@@ -643,7 +545,6 @@ enum CombatOrigin
 	ORIGIN_MELEE,
 	ORIGIN_RANGED,
 	ORIGIN_WAND,
-	ORIGIN_REFLECT,
 };
 
 struct CombatDamage
@@ -660,8 +561,6 @@ struct CombatDamage
 	bool leeched = false;
 };
 
-using MarketOfferList = std::list<MarketOffer>;
-using HistoryMarketOfferList = std::list<HistoryMarketOffer>;
 using ShopInfoList = std::list<ShopInfo>;
 
 enum MonstersEvent_t : uint8_t
@@ -688,28 +587,6 @@ struct Reflect
 
 	uint16_t percent = 0;
 	uint16_t chance = 0;
-};
-
-enum ClientDamageType
-{
-	CLIENT_DAMAGETYPE_PHYSICAL = 0,
-	CLIENT_DAMAGETYPE_FIRE = 1,
-	CLIENT_DAMAGETYPE_EARTH = 2,
-	CLIENT_DAMAGETYPE_ENERGY = 3,
-	CLIENT_DAMAGETYPE_ICE = 4,
-	CLIENT_DAMAGETYPE_HOLY = 5,
-	CLIENT_DAMAGETYPE_DEATH = 6,
-	CLIENT_DAMAGETYPE_HEALING = 7,
-	CLIENT_DAMAGETYPE_DROWN = 8,
-	CLIENT_DAMAGETYPE_LIFEDRAIN = 9,
-	CLIENT_DAMAGETYPE_UNDEFINED = 10
-};
-
-enum DamageAnalyzerImpactType
-{
-	HEALING = 0,
-	DEALT = 1,
-	RECEIVED = 2
 };
 
 #endif // FS_ENUMS_H

@@ -114,17 +114,6 @@ public:
 
 	CreatureType_t getType() const override { return CREATURETYPE_PLAYER; }
 
-	uint16_t getRandomMount() const;
-	uint16_t getCurrentMount() const;
-	void setCurrentMount(uint16_t mountId);
-	bool isMounted() const { return defaultOutfit.lookMount != 0; }
-	bool toggleMount(bool mount);
-	bool tameMount(uint16_t mountId);
-	bool untameMount(uint16_t mountId);
-	bool hasMount(const Mount* mount) const;
-	bool hasMounts() const;
-	void dismount();
-
 	void sendFYIBox(const std::string& message)
 	{
 		if (client) {
@@ -146,8 +135,6 @@ public:
 	}
 
 	uint16_t getStaminaMinutes() const { return staminaMinutes; }
-
-	bool addOfflineTrainingTries(skills_t skill, uint64_t tries);
 
 	void addOfflineTrainingTime(int32_t addTime)
 	{
@@ -184,7 +171,7 @@ public:
 
 	Inbox* getInbox() const { return inbox; }
 
-	uint32_t getClientIcons() const;
+	uint16_t getClientIcons() const;
 
 	const GuildWarVector& getGuildWarVector() const { return guildWarVector; }
 
@@ -251,9 +238,6 @@ public:
 	void setGroup(Group* newGroup) { group = newGroup; }
 	Group* getGroup() const { return group; }
 
-	void setInMarket(bool value) { inMarket = value; }
-	bool isInMarket() const { return inMarket; }
-
 	int32_t getIdleTime() const { return idleTime; }
 
 	void resetIdleTime() { idleTime = 0; }
@@ -293,10 +277,6 @@ public:
 	const Position& getTemplePosition() const { return town->getTemplePosition(); }
 	Town* getTown() const { return town; }
 	void setTown(Town* town) { this->town = town; }
-
-	void clearModalWindows();
-	bool hasModalWindowOpen(uint32_t modalWindowId) const;
-	void onModalWindowHandled(uint32_t modalWindowId);
 
 	bool isPushable() const override;
 	uint32_t isMuted() const;
@@ -416,7 +396,7 @@ public:
 	void onWalkComplete() override;
 
 	void stopWalk();
-	void openShopWindow(Npc* npc, const std::list<ShopInfo>& shop);
+	void openShopWindow(const std::list<ShopInfo>& shop);
 	bool closeShopWindow(bool sendCloseShopWindow = true);
 	bool updateSaleShopList(const Item* item);
 	bool hasShopItemForSale(uint32_t itemId, uint8_t subType) const;
@@ -574,23 +554,10 @@ public:
 			client->sendUpdateTile(tile, pos);
 		}
 	}
-	void sendUpdateCreatureIcons(const Creature* creature)
-	{
-		if (client) {
-			client->sendUpdateCreatureIcons(creature);
-		}
-	}
-
 	void sendChannelMessage(const std::string& author, const std::string& text, SpeakClasses type, uint16_t channel)
 	{
 		if (client) {
 			client->sendChannelMessage(author, text, type, channel);
-		}
-	}
-	void sendChannelEvent(uint16_t channelId, const std::string& playerName, ChannelEvent_t channelEvent)
-	{
-		if (client) {
-			client->sendChannelEvent(channelId, playerName, channelEvent);
 		}
 	}
 	void sendCreatureAppear(const Creature* creature, const Position& pos,
@@ -688,32 +655,7 @@ public:
 			client->sendCreatureShield(creature);
 		}
 	}
-	void sendSpellCooldown(uint8_t spellId, uint32_t time)
-	{
-		if (client) {
-			client->sendSpellCooldown(spellId, time);
-		}
-	}
-	void sendSpellGroupCooldown(SpellGroup_t groupId, uint32_t time)
-	{
-		if (client) {
-			client->sendSpellGroupCooldown(groupId, time);
-		}
-	}
-	void sendUseItemCooldown(uint32_t time)
-	{
-		if (client) {
-			client->sendUseItemCooldown(time);
-		}
-	}
-	void sendSupplyUsed(const uint16_t clientId) const
-	{
-		if (client) {
-			client->sendSupplyUsed(clientId);
-		}
-	}
-	void sendModalWindow(const ModalWindow& modalWindow);
-
+	
 	// container
 	void sendAddContainerItem(const Container* container, const Item* item);
 	void sendUpdateContainerItem(const Container* container, uint16_t slot, const Item* newItem);
@@ -730,12 +672,6 @@ public:
 	{
 		if (client) {
 			client->sendInventoryItem(slot, item);
-		}
-	}
-	void sendItems()
-	{
-		if (client) {
-			client->sendItems();
 		}
 	}
 
@@ -826,27 +762,8 @@ public:
 		}
 	}
 	void sendPing();
-	void sendPingBack() const
-	{
-		if (client) {
-			client->sendPingBack();
-		}
-	}
 	void sendStats();
 
-	void sendExperienceTracker(int64_t rawExp, int64_t finalExp) const
-	{
-		if (client) {
-			client->sendExperienceTracker(rawExp, finalExp);
-		}
-	}
-
-	void sendBasicData() const
-	{
-		if (client) {
-			client->sendBasicData();
-		}
-	}
 	void sendSkills() const
 	{
 		if (client) {
@@ -889,10 +806,10 @@ public:
 			client->sendToChannel(creature, type, text, channelId);
 		}
 	}
-	void sendShop(Npc* npc) const
+	void sendShop() const
 	{
 		if (client) {
-			client->sendShop(npc, shopItemList);
+			client->sendShop(shopItemList);
 		}
 	}
 	void sendSaleItemList() const
@@ -905,51 +822,6 @@ public:
 	{
 		if (client) {
 			client->sendCloseShop();
-		}
-	}
-	void sendMarketEnter() const
-	{
-		if (client) {
-			client->sendMarketEnter();
-		}
-	}
-	void sendMarketLeave()
-	{
-		inMarket = false;
-		if (client) {
-			client->sendMarketLeave();
-		}
-	}
-	void sendMarketBrowseItem(uint16_t itemId, const MarketOfferList& buyOffers,
-	                          const MarketOfferList& sellOffers) const
-	{
-		if (client) {
-			client->sendMarketBrowseItem(itemId, buyOffers, sellOffers);
-		}
-	}
-	void sendMarketBrowseOwnOffers(const MarketOfferList& buyOffers, const MarketOfferList& sellOffers) const
-	{
-		if (client) {
-			client->sendMarketBrowseOwnOffers(buyOffers, sellOffers);
-		}
-	}
-	void sendMarketBrowseOwnHistory(const HistoryMarketOfferList& buyOffers,
-	                                const HistoryMarketOfferList& sellOffers) const
-	{
-		if (client) {
-			client->sendMarketBrowseOwnHistory(buyOffers, sellOffers);
-		}
-	}
-	void sendMarketAcceptOffer(const MarketOfferEx& offer) const
-	{
-		if (client) {
-			client->sendMarketAcceptOffer(offer);
-		}
-	}
-	void sendMarketCancelOffer(const MarketOfferEx& offer) const
-	{
-		if (client) {
-			client->sendMarketCancelOffer(offer);
 		}
 	}
 	void sendTradeItemRequest(const std::string& traderName, const Item* item, bool ack) const
@@ -989,11 +861,10 @@ public:
 		}
 	}
 
-	void sendChannel(uint16_t channelId, const std::string& channelName, const UsersMap* channelUsers,
-	                 const InvitedMap* invitedUsers)
+	void sendChannel(uint16_t channelId, const std::string& channelName)
 	{
 		if (client) {
-			client->sendChannel(channelId, channelName, channelUsers, invitedUsers);
+			client->sendChannel(channelId, channelName);
 		}
 	}
 	void sendTutorial(uint8_t tutorialId)
@@ -1008,12 +879,6 @@ public:
 			client->sendAddMarker(pos, markType, desc);
 		}
 	}
-	void sendEnterWorld()
-	{
-		if (client) {
-			client->sendEnterWorld();
-		}
-	}
 	void sendFightModes()
 	{
 		if (client) {
@@ -1026,20 +891,6 @@ public:
 			client->writeToOutputBuffer(message);
 		}
 	}
-	void sendCombatAnalyzer(CombatType_t type, int32_t amount, DamageAnalyzerImpactType impactType,
-	                        const std::string& target)
-	{
-		if (client) {
-			client->sendCombatAnalyzer(type, amount, impactType, target);
-		}
-	}
-	void sendResourceBalance(const ResourceTypes_t resourceType, uint64_t amount)
-	{
-		if (client) {
-			client->sendResourceBalance(resourceType, amount);
-		}
-	}
-
 	void receivePing() { lastPong = OTSYS_TIME(); }
 
 	void onThink(uint32_t interval) override;
@@ -1242,14 +1093,11 @@ private:
 
 	bool chaseMode = false;
 	bool secureMode = false;
-	bool inMarket = false;
-	bool wasMounted = false;
 	bool ghostMode = false;
 	bool pzLocked = false;
 	bool isConnecting = false;
 	bool addAttackSkillPoint = false;
 	bool inventoryAbilities[CONST_SLOT_LAST + 1] = {};
-	bool randomizeMount = false;
 
 	static uint32_t playerAutoID;
 	static uint32_t playerIDLimit;

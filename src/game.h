@@ -6,7 +6,6 @@
 
 #include "groups.h"
 #include "map.h"
-#include "mounts.h"
 #include "player.h"
 #include "position.h"
 #include "wildcardtree.h"
@@ -297,7 +296,7 @@ public:
 
 	void sendGuildMotd(uint32_t playerId);
 	void kickPlayer(uint32_t playerId, bool displayEffect);
-	void playerReportBug(uint32_t playerId, const std::string& message, const Position& position, uint8_t category);
+	void playerReportBug(uint32_t playerId, const std::string& message);
 	void playerDebugAssert(uint32_t playerId, const std::string& assertLine, const std::string& date,
 	                       const std::string& description, const std::string& comment);
 	void playerAnswerModalWindow(uint32_t playerId, uint32_t modalWindowId, uint8_t button, uint8_t choice);
@@ -331,7 +330,6 @@ public:
 	void playerOpenPrivateChannel(uint32_t playerId, std::string receiver);
 	void playerCloseNpcChannel(uint32_t playerId);
 	void playerReceivePing(uint32_t playerId);
-	void playerReceivePingBack(uint32_t playerId);
 	void playerAutoWalk(uint32_t playerId, const std::vector<Direction>& listDir);
 	void playerStopAutoWalk(uint32_t playerId);
 	void playerUseItemEx(uint32_t playerId, const Position& fromPos, uint8_t fromStackPos, uint16_t fromSpriteId,
@@ -372,26 +370,15 @@ public:
 	void playerRequestOutfit(uint32_t playerId);
 	void playerSay(uint32_t playerId, uint16_t channelId, SpeakClasses type, const std::string& receiver,
 	               const std::string& text);
-	void playerChangeOutfit(uint32_t playerId, Outfit_t outfit, bool randomizeMount = false);
+	void playerChangeOutfit(uint32_t playerId, Outfit_t outfit);
 	void playerInviteToParty(uint32_t playerId, uint32_t invitedId);
 	void playerJoinParty(uint32_t playerId, uint32_t leaderId);
 	void playerRevokePartyInvitation(uint32_t playerId, uint32_t invitedId);
 	void playerPassPartyLeadership(uint32_t playerId, uint32_t newLeaderId);
 	void playerLeaveParty(uint32_t playerId);
 	void playerEnableSharedPartyExperience(uint32_t playerId, bool sharedExpActive);
-	void playerToggleMount(uint32_t playerId, bool mount);
-	void playerLeaveMarket(uint32_t playerId);
-	void playerBrowseMarket(uint32_t playerId, uint16_t spriteId);
-	void playerBrowseMarketOwnOffers(uint32_t playerId);
-	void playerBrowseMarketOwnHistory(uint32_t playerId);
-	void playerCreateMarketOffer(uint32_t playerId, uint8_t type, uint16_t spriteId, uint16_t amount, uint64_t price,
-	                             bool anonymous);
-	void playerCancelMarketOffer(uint32_t playerId, uint32_t timestamp, uint16_t counter);
-	void playerAcceptMarketOffer(uint32_t playerId, uint32_t timestamp, uint16_t counter, uint16_t amount);
-
+	
 	void parsePlayerExtendedOpcode(uint32_t playerId, uint8_t opcode, const std::string& buffer);
-
-	std::vector<Item*> getMarketItemList(uint16_t wareId, uint16_t sufficientCount, const Player& player);
 
 	void cleanup();
 	void shutdown();
@@ -442,8 +429,6 @@ public:
 
 	void startDecay(Item* item);
 
-	void sendOfflineTrainingDialog(Player* player);
-
 	const std::unordered_map<uint32_t, Player*>& getPlayers() const { return players; }
 	const std::map<uint32_t, Npc*>& getNpcs() const { return npcs; }
 	const std::map<uint32_t, Monster*>& getMonsters() const { return monsters; }
@@ -478,7 +463,6 @@ public:
 
 	Groups groups;
 	Map map;
-	Mounts mounts;
 
 	std::forward_list<Item*> toDecayItems;
 
@@ -523,8 +507,6 @@ private:
 	std::map<uint32_t, BedItem*> bedSleepersMap;
 
 	std::unordered_set<Tile*> tilesToClean;
-
-	ModalWindow offlineTrainingWindow{std::numeric_limits<uint32_t>::max(), "Choose a Skill", "Please choose a skill:"};
 
 	GameState_t gameState = GAME_STATE_NORMAL;
 	WorldType_t worldType = WORLD_TYPE_PVP;

@@ -273,10 +273,6 @@ void Creature::startAutoWalk(Direction direction)
 
 void Creature::startAutoWalk(const std::vector<Direction>& listDir)
 {
-	if (hasCondition(CONDITION_ROOT)) {
-		return;
-	}
-
 	Player* player = getPlayer();
 	if (player && player->isMovementBlocked()) {
 		player->sendCancelWalk();
@@ -317,16 +313,6 @@ void Creature::stopEventWalk()
 	if (eventWalk != 0) {
 		g_scheduler.stopEvent(eventWalk);
 		eventWalk = 0;
-	}
-}
-
-void Creature::updateIcons() const
-{
-	SpectatorVec spectators;
-	g_game.map.getSpectators(spectators, position, true, true);
-	for (Creature* spectator : spectators) {
-		assert(dynamic_cast<Player*>(spectator) != nullptr);
-		static_cast<Player*>(spectator)->sendUpdateCreatureIcons(this);
 	}
 }
 
@@ -762,10 +748,6 @@ bool Creature::dropCorpse(Creature* lastHitCreature, Creature* mostDamageCreatur
 				splash = Item::CreateItem(ITEM_FULLSPLASH, FLUID_BLOOD);
 				break;
 
-			case RACE_INK:
-				splash = Item::CreateItem(ITEM_FULLSPLASH, FLUID_INK);
-				break;
-
 			default:
 				splash = nullptr;
 				break;
@@ -1175,7 +1157,7 @@ void Creature::onGainExperience(uint64_t gainExp, Creature* target)
 		return;
 	}
 
-	TextMessage message(MESSAGE_EXPERIENCE_OTHERS, ucfirst(getNameDescription()) + " gained " +
+	TextMessage message(MESSAGE_STATUS_DEFAULT, ucfirst(getNameDescription()) + " gained " +
 	                                                   std::to_string(gainExp) +
 	                                                   (gainExp != 1 ? " experience points." : " experience point."));
 	message.position = position;

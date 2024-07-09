@@ -445,7 +445,6 @@ void Weapon::onUsedWeapon(Player* player, Item* item, Tile* destTile) const
 	}
 
 	if (breakChance != 0 && uniform_random(1, 100) <= breakChance) {
-		player->sendSupplyUsed(item->getClientID());
 		Weapon::decrementItemCount(item);
 		return;
 	}
@@ -453,7 +452,6 @@ void Weapon::onUsedWeapon(Player* player, Item* item, Tile* destTile) const
 	switch (action) {
 		case WEAPONACTION_REMOVECOUNT:
 			if (getBoolean(ConfigManager::REMOVE_WEAPON_AMMO)) {
-				player->sendSupplyUsed(item->getClientID());
 				Weapon::decrementItemCount(item);
 			}
 			break;
