@@ -1723,7 +1723,7 @@ void Player::removeExperience(uint64_t exp, bool sendText /* = false*/)
 
 		std::string expString = std::to_string(lostExp) + (lostExp != 1 ? " experience points." : " experience point.");
 
-		TextMessage message(MESSAGE_EXPERIENCE, "You lost " + expString);
+		TextMessage message(MESSAGE_STATUS_DEFAULT, "You lost " + expString);
 		message.position = position;
 		message.primary.value = lostExp;
 		message.primary.color = TEXTCOLOR_RED;
@@ -1733,7 +1733,7 @@ void Player::removeExperience(uint64_t exp, bool sendText /* = false*/)
 		g_game.map.getSpectators(spectators, position, false, true);
 		spectators.erase(this);
 		if (!spectators.empty()) {
-			message.type = MESSAGE_EXPERIENCE_OTHERS;
+			message.type = MESSAGE_STATUS_DEFAULT;
 			message.text = getName() + " lost " + expString;
 			for (Creature* spectator : spectators) {
 				assert(dynamic_cast<Player*>(spectator) != nullptr);
@@ -1921,14 +1921,6 @@ BlockType_t Player::blockHit(Creature* attacker, CombatType_t combatType, int32_
 					}
 				}
 			}
-		}
-
-		if (attacker && reflect.chance > 0 && reflect.percent != 0 && uniform_random(1, 100) <= reflect.chance) {
-			CombatDamage reflectDamage;
-			reflectDamage.primary.type = combatType;
-			reflectDamage.primary.value = -std::round(damage * (reflect.percent / 100.));
-			reflectDamage.origin = ORIGIN_REFLECT;
-			g_game.combatChangeHealth(this, attacker, reflectDamage);
 		}
 	}
 
@@ -3424,10 +3416,6 @@ void Player::onAddCombatCondition(ConditionType_t type)
 
 		case CONDITION_BLEEDING:
 			sendTextMessage(MESSAGE_STATUS_DEFAULT, "You are bleeding.");
-			break;
-
-		case CONDITION_ROOT:
-			sendTextMessage(MESSAGE_STATUS_DEFAULT, "You are rooted.");
 			break;
 
 		default:

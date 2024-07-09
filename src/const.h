@@ -6,16 +6,6 @@
 
 static constexpr int32_t NETWORKMESSAGE_MAXSIZE = 24590;
 
-enum MagicEffectsType_t : uint8_t
-{
-	MAGIC_EFFECTS_END_LOOP = 0,              // ends the magic effect loop
-	MAGIC_EFFECTS_DELTA = 1,                 // needs uint8_t delta after type to adjust position
-	MAGIC_EFFECTS_DELAY = 2,                 // needs uint16_t delay after type to delay in miliseconds effect display
-	MAGIC_EFFECTS_CREATE_EFFECT = 3,         // needs uint8_t effectid after type
-	MAGIC_EFFECTS_CREATE_DISTANCEEFFECT = 4, // needs uint8_t and deltaX(int8_t), deltaY(int8_t) after type
-	MAGIC_EFFECTS_CREATE_DISTANCEEFFECT_REVERSED = 5, // needs uint8_t and deltaX(int8_t), deltaY(int8_t) after type
-};
-
 enum MagicEffectClasses : uint8_t
 {
 	CONST_ME_NONE,
@@ -90,87 +80,6 @@ enum MagicEffectClasses : uint8_t
 	CONST_ME_SMOKE = 68,
 	CONST_ME_INSECTS = 69,
 	CONST_ME_DRAGONHEAD = 70,
-	CONST_ME_ORCSHAMAN = 71,
-	CONST_ME_ORCSHAMAN_FIRE = 72,
-	CONST_ME_THUNDER = 73,
-	CONST_ME_FERUMBRAS = 74,
-	CONST_ME_CONFETTI_HORIZONTAL = 75,
-	CONST_ME_CONFETTI_VERTICAL = 76,
-	// 77-157 are empty
-	CONST_ME_BLACKSMOKE = 158,
-	// 159-166 are empty
-	CONST_ME_REDSMOKE = 167,
-	CONST_ME_YELLOWSMOKE = 168,
-	CONST_ME_GREENSMOKE = 169,
-	CONST_ME_PURPLESMOKE = 170,
-	CONST_ME_EARLY_THUNDER = 171,
-	CONST_ME_RAGIAZ_BONECAPSULE = 172,
-	CONST_ME_CRITICAL_DAMAGE = 173,
-	// 174 is empty
-	CONST_ME_PLUNGING_FISH = 175,
-	CONST_ME_BLUECHAIN = 176,
-	CONST_ME_ORANGECHAIN = 177,
-	CONST_ME_GREENCHAIN = 178,
-	CONST_ME_PURPLECHAIN = 179,
-	CONST_ME_GREYCHAIN = 180,
-	CONST_ME_YELLOWCHAIN = 181,
-	CONST_ME_YELLOWSPARKLES = 182,
-	// 183 is empty
-	CONST_ME_FAEEXPLOSION = 184,
-	CONST_ME_FAECOMING = 185,
-	CONST_ME_FAEGOING = 186,
-	// 187 is empty
-	CONST_ME_BIGCLOUDSSINGLESPACE = 188,
-	CONST_ME_STONESSINGLESPACE = 189,
-	// 190 is empty
-	CONST_ME_BLUEGHOST = 191,
-	// 192 is empty
-	CONST_ME_POINTOFINTEREST = 193,
-	CONST_ME_MAPEFFECT = 194,
-	CONST_ME_PINKSPARK = 195,
-	CONST_ME_FIREWORK_GREEN = 196,
-	CONST_ME_FIREWORK_ORANGE = 197,
-	CONST_ME_FIREWORK_PURPLE = 198,
-	CONST_ME_FIREWORK_TURQUOISE = 199,
-	// 200 is empty
-	CONST_ME_THECUBE = 201,
-	CONST_ME_DRAWINK = 202,
-	CONST_ME_PRISMATICSPARKLES = 203,
-	CONST_ME_THAIAN = 204,
-	CONST_ME_THAIANGHOST = 205,
-	CONST_ME_GHOSTSMOKE = 206,
-	// 207 is empty
-	CONST_ME_FLOATINGBLOCK = 208,
-	CONST_ME_BLOCK = 209,
-	CONST_ME_ROOTING = 210,
-	// 211-212 were removed from the client
-	CONST_ME_GHOSTLYSCRATCH = 213,
-	CONST_ME_GHOSTLYBITE = 214,
-	CONST_ME_BIGSCRATCHING = 215,
-	CONST_ME_SLASH = 216,
-	CONST_ME_BITE = 217,
-	// 218 is empty
-	CONST_ME_CHIVALRIOUSCHALLENGE = 219,
-	CONST_ME_DIVINEDAZZLE = 220,
-	CONST_ME_ELECTRICALSPARK = 221,
-	CONST_ME_PURPLETELEPORT = 222,
-	CONST_ME_REDTELEPORT = 223,
-	CONST_ME_ORANGETELEPORT = 224,
-	CONST_ME_GREYTELEPORT = 225,
-	CONST_ME_LIGHTBLUETELEPORT = 226,
-	// 227-229 are empty
-	CONST_ME_FATAL = 230,
-	CONST_ME_DODGE = 231,
-	CONST_ME_HOURGLASS = 232,
-	CONST_ME_FIREWORKSSTAR = 233,
-	CONST_ME_FIREWORKSCIRCLE = 234,
-	CONST_ME_FERUMBRAS_1 = 235,
-	CONST_ME_GAZHARAGOTH = 236,
-	CONST_ME_MAD_MAGE = 237,
-	CONST_ME_HORESTIS = 238,
-	CONST_ME_DEVOVORGA = 239,
-	CONST_ME_FERUMBRAS_2 = 240,
-	CONST_ME_FOAM = 241,
 };
 
 enum ShootType_t : uint8_t
@@ -218,23 +127,6 @@ enum ShootType_t : uint8_t
 	CONST_ANI_SMALLEARTH = 39,
 	CONST_ANI_EARTHARROW = 40,
 	CONST_ANI_EXPLOSION = 41,
-	CONST_ANI_CAKE = 42,
-
-	CONST_ANI_TARSALARROW = 44,
-	CONST_ANI_VORTEXBOLT = 45,
-
-	CONST_ANI_PRISMATICBOLT = 48,
-	CONST_ANI_CRYSTALLINEARROW = 49,
-	CONST_ANI_DRILLBOLT = 50,
-	CONST_ANI_ENVENOMEDARROW = 51,
-
-	CONST_ANI_GLOOTHSPEAR = 53,
-	CONST_ANI_SIMPLEARROW = 54,
-
-	CONST_ANI_LEAFSTAR = 56,
-	CONST_ANI_DIAMONDARROW = 57,
-	CONST_ANI_SPECTRALBOLT = 58,
-	CONST_ANI_ROYALSTAR = 59,
 
 	// for internal use, don't send to client
 	CONST_ANI_WEAPONTYPE = 0xFE, // 254
@@ -245,66 +137,35 @@ enum SpeakClasses : uint8_t
 	TALKTYPE_SAY = 1,
 	TALKTYPE_WHISPER = 2,
 	TALKTYPE_YELL = 3,
-	TALKTYPE_PRIVATE_FROM = 4, // Received private message
-	TALKTYPE_PRIVATE_TO = 5,   // Sent private message
-	// TALKTYPE_CHANNEL_M = 6 // not working (?)
+	TALKTYPE_PRIVATE_PN = 4,
+	TALKTYPE_PRIVATE_NP = 5,
+	TALKTYPE_PRIVATE = 6,
 	TALKTYPE_CHANNEL_Y = 7,
-	TALKTYPE_CHANNEL_O = 8,
-	TALKTYPE_SPELL = 9,               // Like SAY but with "casts" instead of "says"
-	TALKTYPE_PRIVATE_NP = 10,         // NPC speaking to player
-	TALKTYPE_PRIVATE_NP_CONSOLE = 11, // NPC channel message, no text on game screen, for sendPrivateMessage use only
-	TALKTYPE_PRIVATE_PN = 12,         // Player speaking to NPC
-	TALKTYPE_BROADCAST = 13,
-	TALKTYPE_CHANNEL_R1 = 14,       // red - #c text
-	TALKTYPE_PRIVATE_RED_FROM = 15, // @name@text
-	TALKTYPE_PRIVATE_RED_TO = 16,   // @name@text
-	TALKTYPE_CHANNEL_R2 = 17,       // #d
-	TALKTYPE_MONSTER_SAY = 36,
-	TALKTYPE_MONSTER_YELL = 37,
-	TALKTYPE_POTION = 52, // Like MONSTER_SAY but can be disabled in client settings
+	TALKTYPE_CHANNEL_W = 8,
+	TALKTYPE_RVR_CHANNEL = 9,
+	TALKTYPE_RVR_ANSWER = 10,
+	TALKTYPE_RVR_CONTINUE = 11,
+	TALKTYPE_BROADCAST = 12,
+	TALKTYPE_CHANNEL_R1 = 13,  // red - #c text
+	TALKTYPE_PRIVATE_RED = 14, //@name@text
+	TALKTYPE_CHANNEL_O = 15,   //@name@text
+	TALKTYPE_CHANNEL_R2 = 17,  // #d
+	TALKTYPE_MONSTER_SAY = 19,
+	TALKTYPE_MONSTER_YELL = 20,
 };
 
 enum MessageClasses : uint8_t
 {
-	MESSAGE_STATUS_DEFAULT = 17,  // White, bottom + console
-	MESSAGE_STATUS_WARNING = 18,  // Red, over player + console
-	MESSAGE_EVENT_ADVANCE = 19,   // White, over player + console
-	MESSAGE_STATUS_WARNING2 = 20, // Red, over player + console
-	MESSAGE_STATUS_SMALL = 21,    // White, bottom of the screen
-	MESSAGE_INFO_DESCR = 22,      // Green, over player + console
-
-	// White, console
-	MESSAGE_DAMAGE_DEALT = 23,
-	MESSAGE_DAMAGE_RECEIVED = 24,
-	MESSAGE_HEALED = 25,
-	MESSAGE_EXPERIENCE = 26,
-	MESSAGE_DAMAGE_OTHERS = 27,
-	MESSAGE_HEALED_OTHERS = 28,
-	MESSAGE_EXPERIENCE_OTHERS = 29,
-
-	MESSAGE_EVENT_DEFAULT = 30, // White, bottom + console
-	MESSAGE_LOOT = 31,          // White, over player + console, supports colors as {text|itemClientId}
-	MESSAGE_TRADE = 32,         // Green, over player + console
-
-	// White, in channel (needs channel Id)
-	MESSAGE_GUILD = 33,
-	MESSAGE_PARTY_MANAGEMENT = 34,
-	MESSAGE_PARTY = 35,
-
-	MESSAGE_REPORT = 38,         // White, over player + conosle
-	MESSAGE_HOTKEY_PRESSED = 39, // Green, over player + console
-	// MESSAGE_TUTORIAL_HINT = 40, // not working (?)
-	// MESSAGE_THANK_YOU = 41, // not working (?)
-	// MESSAGE_MARKET = 42, // Window "Market Message" + "Ok" button
-	// MESSAGE_MANA = 43, // not working (?)
-	MESSAGE_BEYOND_LAST = 44,     // White, console only
-	MESSAGE_TOURNAMENT_INFO = 45, // Window "Tournament" + "Ok" button
-	// unused 46?
-	// unused 47?
-	MESSAGE_ATTENTION = 48,        // White, console only
-	MESSAGE_BOOSTED_CREATURE = 49, // White, console only
-	MESSAGE_OFFLINE_TRAINING = 50, // White, over player + console
-	MESSAGE_TRANSACTION = 51,      // White, console only
+	MESSAGE_STATUS_CONSOLE_RED = 18,    /*Red message in the console*/
+	MESSAGE_EVENT_ORANGE = 19,          /*Orange message in the console*/
+	MESSAGE_STATUS_CONSOLE_ORANGE = 20, /*Orange message in the console*/
+	MESSAGE_STATUS_WARNING = 21,        /*Red message in game window and in the console*/
+	MESSAGE_EVENT_ADVANCE = 22,         /*White message in game window and in the console*/
+	MESSAGE_EVENT_DEFAULT = 23,         /*White message at the bottom of the game window and in the console*/
+	MESSAGE_STATUS_DEFAULT = 24,        /*White message at the bottom of the game window and in the console*/
+	MESSAGE_INFO_DESCR = 25,            /*Green message in game window and in the console*/
+	MESSAGE_STATUS_SMALL = 26,          /*White message at the bottom of the game window"*/
+	MESSAGE_STATUS_CONSOLE_BLUE = 27,   /*FIXME Blue message in the console*/
 };
 
 enum FluidColors_t : uint8_t
@@ -317,7 +178,6 @@ enum FluidColors_t : uint8_t
 	FLUID_YELLOW,
 	FLUID_WHITE,
 	FLUID_PURPLE,
-	FLUID_BLACK,
 };
 
 enum FluidTypes_t : uint8_t
@@ -330,7 +190,6 @@ enum FluidTypes_t : uint8_t
 	FLUID_LEMONADE = FLUID_YELLOW,
 	FLUID_MILK = FLUID_WHITE,
 	FLUID_MANA = FLUID_PURPLE,
-	FLUID_INK = FLUID_BLACK,
 
 	FLUID_LIFE = FLUID_RED + 8,
 	FLUID_OIL = FLUID_BROWN + 8,
@@ -352,13 +211,13 @@ enum FluidTypes_t : uint8_t
 
 const uint8_t reverseFluidMap[] = {
     FLUID_EMPTY, FLUID_WATER, FLUID_MANA,     FLUID_BEER, FLUID_EMPTY, FLUID_BLOOD,
-    FLUID_SLIME, FLUID_EMPTY, FLUID_LEMONADE, FLUID_MILK, FLUID_INK,
+    FLUID_SLIME, FLUID_EMPTY, FLUID_LEMONADE, FLUID_MILK, 
 };
 
 const uint8_t clientToServerFluidMap[] = {
     FLUID_EMPTY,      FLUID_WATER,       FLUID_MANA, FLUID_BEER, FLUID_MUD,  FLUID_BLOOD, FLUID_SLIME,
     FLUID_RUM,        FLUID_LEMONADE,    FLUID_MILK, FLUID_WINE, FLUID_LIFE, FLUID_URINE, FLUID_OIL,
-    FLUID_FRUITJUICE, FLUID_COCONUTMILK, FLUID_TEA,  FLUID_MEAD, FLUID_INK,
+    FLUID_FRUITJUICE, FLUID_COCONUTMILK, FLUID_TEA,  FLUID_MEAD,
 };
 
 enum ClientFluidTypes_t : uint8_t
@@ -662,7 +521,6 @@ enum ReloadTypes_t : uint8_t
 	RELOAD_TYPE_GLOBALEVENTS,
 	RELOAD_TYPE_ITEMS,
 	RELOAD_TYPE_MONSTERS,
-	RELOAD_TYPE_MOUNTS,
 	RELOAD_TYPE_MOVEMENTS,
 	RELOAD_TYPE_NPCS,
 	RELOAD_TYPE_QUESTS,

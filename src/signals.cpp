@@ -12,7 +12,6 @@
 #include "game.h"
 #include "globalevent.h"
 #include "monsters.h"
-#include "mounts.h"
 #include "movement.h"
 #include "npc.h"
 #include "scheduler.h"

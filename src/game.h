@@ -6,7 +6,6 @@
 
 #include "groups.h"
 #include "map.h"
-#include "mounts.h"
 #include "player.h"
 #include "position.h"
 #include "wildcardtree.h"
@@ -371,7 +370,7 @@ public:
 	void playerRequestOutfit(uint32_t playerId);
 	void playerSay(uint32_t playerId, uint16_t channelId, SpeakClasses type, const std::string& receiver,
 	               const std::string& text);
-	void playerChangeOutfit(uint32_t playerId, Outfit_t outfit, bool randomizeMount = false);
+	void playerChangeOutfit(uint32_t playerId, Outfit_t outfit);
 	void playerInviteToParty(uint32_t playerId, uint32_t invitedId);
 	void playerJoinParty(uint32_t playerId, uint32_t leaderId);
 	void playerRevokePartyInvitation(uint32_t playerId, uint32_t invitedId);
@@ -430,8 +429,6 @@ public:
 
 	void startDecay(Item* item);
 
-	void sendOfflineTrainingDialog(Player* player);
-
 	const std::unordered_map<uint32_t, Player*>& getPlayers() const { return players; }
 	const std::map<uint32_t, Npc*>& getNpcs() const { return npcs; }
 	const std::map<uint32_t, Monster*>& getMonsters() const { return monsters; }
@@ -466,7 +463,6 @@ public:
 
 	Groups groups;
 	Map map;
-	Mounts mounts;
 
 	std::forward_list<Item*> toDecayItems;
 
@@ -511,8 +507,6 @@ private:
 	std::map<uint32_t, BedItem*> bedSleepersMap;
 
 	std::unordered_set<Tile*> tilesToClean;
-
-	ModalWindow offlineTrainingWindow{std::numeric_limits<uint32_t>::max(), "Choose a Skill", "Please choose a skill:"};
 
 	GameState_t gameState = GAME_STATE_NORMAL;
 	WorldType_t worldType = WORLD_TYPE_PVP;

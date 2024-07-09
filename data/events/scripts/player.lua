@@ -49,12 +49,6 @@ function Player:onLookInShop(itemType, count)
 	end
 end
 
-function Player:onLookInMarket(itemType)
-	if hasEvent.onLookInMarket then
-		Event.onLookInMarket(self, itemType)
-	end
-end
-
 function Player:onMoveItem(item, count, fromPosition, toPosition, fromCylinder, toCylinder)
 	if hasEvent.onMoveItem then
 		return Event.onMoveItem(self, item, count, fromPosition, toPosition, fromCylinder, toCylinder)

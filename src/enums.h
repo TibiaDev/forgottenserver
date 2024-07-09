@@ -167,7 +167,6 @@ enum RaceType_t : uint8_t
 	RACE_UNDEAD,
 	RACE_FIRE,
 	RACE_ENERGY,
-	RACE_INK,
 };
 
 enum CombatType_t : uint16_t
@@ -359,9 +358,6 @@ enum ConditionType_t
 	CONDITION_EXHAUST_COMBAT = 1 << 23, // unused
 	CONDITION_EXHAUST_HEAL = 1 << 24,   // unused
 	CONDITION_PACIFIED = 1 << 25,
-	CONDITION_SPELLCOOLDOWN = 1 << 26,
-	CONDITION_SPELLGROUPCOOLDOWN = 1 << 27,
-	CONDITION_ROOT = 1 << 28,
 	CONDITION_MANASHIELD_BREAKABLE = 1 << 29,
 };
 
@@ -516,11 +512,6 @@ struct Outfit_t
 	uint8_t lookLegs = 0;
 	uint8_t lookFeet = 0;
 	uint8_t lookAddons = 0;
-	uint16_t lookMount = 0;
-	uint8_t lookMountHead = 0;
-	uint8_t lookMountBody = 0;
-	uint8_t lookMountLegs = 0;
-	uint8_t lookMountFeet = 0;
 };
 
 struct LightInfo
@@ -535,27 +526,14 @@ struct ShopInfo
 {
 	uint16_t itemId = 0;
 	int32_t subType = 1;
-	int64_t buyPrice = 0;
-	int64_t sellPrice = 0;
+	uint32_t buyPrice = 0;
+	uint32_t sellPrice = 0;
 	std::string realName = "";
 
 	ShopInfo() = default;
-	ShopInfo(uint16_t itemId, int32_t subType = 0, int64_t buyPrice = 0, int64_t sellPrice = 0,
+	ShopInfo(uint16_t itemId, int32_t subType = 0, uint32_t buyPrice = 0, uint32_t sellPrice = 0,
 	         std::string realName = "") :
 	    itemId(itemId), subType(subType), buyPrice(buyPrice), sellPrice(sellPrice), realName(std::move(realName))
-	{}
-};
-
-struct ModalWindow
-{
-	std::list<std::pair<std::string, uint8_t>> buttons, choices;
-	std::string title, message;
-	uint32_t id;
-	uint8_t defaultEnterButton = 0xFF, defaultEscapeButton = 0xFF;
-	bool priority = false;
-
-	ModalWindow(uint32_t id, std::string title, std::string message) :
-	    title(std::move(title)), message(std::move(message)), id(id)
 	{}
 };
 
@@ -567,7 +545,6 @@ enum CombatOrigin
 	ORIGIN_MELEE,
 	ORIGIN_RANGED,
 	ORIGIN_WAND,
-	ORIGIN_REFLECT,
 };
 
 struct CombatDamage
@@ -610,28 +587,6 @@ struct Reflect
 
 	uint16_t percent = 0;
 	uint16_t chance = 0;
-};
-
-enum ClientDamageType
-{
-	CLIENT_DAMAGETYPE_PHYSICAL = 0,
-	CLIENT_DAMAGETYPE_FIRE = 1,
-	CLIENT_DAMAGETYPE_EARTH = 2,
-	CLIENT_DAMAGETYPE_ENERGY = 3,
-	CLIENT_DAMAGETYPE_ICE = 4,
-	CLIENT_DAMAGETYPE_HOLY = 5,
-	CLIENT_DAMAGETYPE_DEATH = 6,
-	CLIENT_DAMAGETYPE_HEALING = 7,
-	CLIENT_DAMAGETYPE_DROWN = 8,
-	CLIENT_DAMAGETYPE_LIFEDRAIN = 9,
-	CLIENT_DAMAGETYPE_UNDEFINED = 10
-};
-
-enum DamageAnalyzerImpactType
-{
-	HEALING = 0,
-	DEALT = 1,
-	RECEIVED = 2
 };
 
 #endif // FS_ENUMS_H

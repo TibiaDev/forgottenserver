@@ -280,13 +280,9 @@ private:
 	static int luaGameGetBestiary(lua_State* L);
 	static int luaGameGetCurrencyItems(lua_State* L);
 	static int luaGameGetItemTypeByClientId(lua_State* L);
-	static int luaGameGetMountIdByLookType(lua_State* L);
 
 	static int luaGameGetTowns(lua_State* L);
 	static int luaGameGetHouses(lua_State* L);
-	static int luaGameGetOutfits(lua_State* L);
-	static int luaGameGetMounts(lua_State* L);
-	static int luaGameGetVocations(lua_State* L);
 
 	static int luaGameGetGameState(lua_State* L);
 	static int luaGameSetGameState(lua_State* L);
@@ -397,32 +393,6 @@ private:
 	static int luaNetworkMessageLength(lua_State* L);
 	static int luaNetworkMessageSkipBytes(lua_State* L);
 	static int luaNetworkMessageSendToPlayer(lua_State* L);
-
-	// ModalWindow
-	static int luaModalWindowCreate(lua_State* L);
-	static int luaModalWindowDelete(lua_State* L);
-
-	static int luaModalWindowGetId(lua_State* L);
-	static int luaModalWindowGetTitle(lua_State* L);
-	static int luaModalWindowGetMessage(lua_State* L);
-
-	static int luaModalWindowSetTitle(lua_State* L);
-	static int luaModalWindowSetMessage(lua_State* L);
-
-	static int luaModalWindowGetButtonCount(lua_State* L);
-	static int luaModalWindowGetChoiceCount(lua_State* L);
-
-	static int luaModalWindowAddButton(lua_State* L);
-	static int luaModalWindowAddChoice(lua_State* L);
-
-	static int luaModalWindowGetDefaultEnterButton(lua_State* L);
-	static int luaModalWindowSetDefaultEnterButton(lua_State* L);
-
-	static int luaModalWindowGetDefaultEscapeButton(lua_State* L);
-	static int luaModalWindowSetDefaultEscapeButton(lua_State* L);
-
-	static int luaModalWindowHasPriority(lua_State* L);
-	static int luaModalWindowSetPriority(lua_State* L);
 
 	// Item
 	static int luaItemCreate(lua_State* L);
@@ -1006,9 +976,6 @@ private:
 	static int luaItemTypeGetVocationString(lua_State* L);
 	static int luaItemTypeGetMinReqLevel(lua_State* L);
 	static int luaItemTypeGetMinReqMagicLevel(lua_State* L);
-
-	static int luaItemTypeGetMarketBuyStatistics(lua_State* L);
-	static int luaItemTypeGetMarketSellStatistics(lua_State* L);
 
 	static int luaItemTypeHasSubType(lua_State* L);
 

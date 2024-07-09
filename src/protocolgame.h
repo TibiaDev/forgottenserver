@@ -148,7 +148,7 @@ private:
 	void sendOpenPrivateChannel(const std::string& receiver);
 	void sendToChannel(const Creature* creature, SpeakClasses type, const std::string& text, uint16_t channelId);
 	void sendPrivateMessage(const Player* speaker, SpeakClasses type, const std::string& text);
-	void sendIcons(uint32_t icons);
+	void sendIcons(uint16_t icons);
 	void sendFYIBox(const std::string& message);
 
 	void sendDistanceShoot(const Position& from, const Position& to, uint8_t type);
@@ -184,8 +184,6 @@ private:
 	void sendTextWindow(uint32_t windowTextId, Item* item, uint16_t maxlen, bool canWrite);
 	void sendTextWindow(uint32_t windowTextId, uint32_t itemId, const std::string& text);
 	void sendHouseWindow(uint32_t windowTextId, const std::string& text);
-	void sendCombatAnalyzer(CombatType_t type, int32_t amount, DamageAnalyzerImpactType impactType,
-	                        const std::string& target);
 	void sendOutfitWindow();
 
 	void sendUpdatedVIPStatus(uint32_t guid, VipStatus_t newStatus);
