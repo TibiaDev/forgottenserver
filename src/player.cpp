@@ -950,22 +950,18 @@ void Player::sendAddContainerItem(const Container* container, const Item* item)
 			continue;
 		}
 
-		uint16_t slot = openContainer.index;
 		if (container->getID() == ITEM_BROWSEFIELD) {
 			uint16_t containerSize = container->size() - 1;
 			uint16_t pageEnd = openContainer.index + container->capacity() - 1;
 			if (containerSize > pageEnd) {
-				slot = pageEnd;
 				item = container->getItemByIndex(pageEnd);
-			} else {
-				slot = containerSize;
 			}
 		} else if (openContainer.index >= container->capacity()) {
 			item = container->getItemByIndex(openContainer.index);
 		}
 
 		if (item) {
-			client->sendAddContainerItem(it.first, slot, item);
+			client->sendAddContainerItem(it.first, item);
 		}
 	}
 }
@@ -1013,8 +1009,7 @@ void Player::sendRemoveContainerItem(const Container* container, uint16_t slot)
 			sendContainer(it.first, container, false, firstIndex);
 		}
 
-		client->sendRemoveContainerItem(it.first, std::max<uint16_t>(slot, firstIndex),
-		                                container->getItemByIndex(container->capacity() + firstIndex));
+		client->sendRemoveContainerItem(it.first, std::max<uint16_t>(slot, firstIndex));
 	}
 }
 
@@ -2034,7 +2029,7 @@ void Player::death(Creature* lastHitCreature)
 
 		sendStats();
 		sendSkills();
-		sendReLoginWindow(unfairFightReduction);
+		sendReLoginWindow();
 
 		if (getSkull() == SKULL_BLACK) {
 			health = 40;

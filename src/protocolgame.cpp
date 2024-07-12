@@ -1410,7 +1410,7 @@ void ProtocolGame::sendAddMarker(const Position& pos, uint8_t markType, const st
 	writeToOutputBuffer(msg);
 }
 
-void ProtocolGame::sendReLoginWindow(uint8_t unfairFightReduction)
+void ProtocolGame::sendReLoginWindow()
 {
 	NetworkMessage msg;
 	msg.addByte(0x28);
@@ -1546,9 +1546,6 @@ void ProtocolGame::sendCloseShop()
 
 void ProtocolGame::sendSaleItemList(const std::list<ShopInfo>& shop)
 {
-	uint64_t playerBank = player->getBankBalance();
-	uint64_t playerMoney = player->getMoney();
-
 	NetworkMessage msg;
 	msg.addByte(0x7B);
 
@@ -2153,7 +2150,7 @@ void ProtocolGame::sendInventoryItem(slots_t slot, const Item* item)
 	writeToOutputBuffer(msg);
 }
 
-void ProtocolGame::sendAddContainerItem(uint8_t cid, uint16_t slot, const Item* item)
+void ProtocolGame::sendAddContainerItem(uint8_t cid, const Item* item)
 {
 	NetworkMessage msg;
 	msg.addByte(0x70);
@@ -2172,7 +2169,7 @@ void ProtocolGame::sendUpdateContainerItem(uint8_t cid, uint16_t slot, const Ite
 	writeToOutputBuffer(msg);
 }
 
-void ProtocolGame::sendRemoveContainerItem(uint8_t cid, uint16_t slot, const Item* lastItem)
+void ProtocolGame::sendRemoveContainerItem(uint8_t cid, uint16_t slot)
 {
 	NetworkMessage msg;
 	msg.addByte(0x72);
@@ -2309,8 +2306,6 @@ void ProtocolGame::sendVIPEntries()
 
 	for (const VIPEntry& entry : vipEntries) {
 		VipStatus_t vipStatus = VIPSTATUS_ONLINE;
-
-		Player* vipPlayer = g_game.getPlayerByGUID(entry.guid);
 
 		sendVIP(entry.guid, entry.name, vipStatus);
 	}
