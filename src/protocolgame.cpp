@@ -2220,7 +2220,6 @@ void ProtocolGame::sendTextWindow(uint32_t windowTextId, uint32_t itemId, const 
 	msg.add<uint16_t>(text.size());
 	msg.addString(text);
 	msg.add<uint16_t>(0x00); // writer name
-	msg.addByte(0x00);       // "(traded)" byte
 	msg.add<uint16_t>(0x00); // date
 	writeToOutputBuffer(msg);
 }
