@@ -15,8 +15,7 @@ function onCastSpell(creature, variant, isHotkey)
 				if item:getType():isMovable() and
 						item:getUniqueId() > 65535 and
 						item:getActionId() == 0 and not
-						table.contains(corpseIds, item:getId()) and not
-						item:isStoreItem() then
+						table.contains(corpseIds, item:getId()) then
 					item:remove()
 				end
 

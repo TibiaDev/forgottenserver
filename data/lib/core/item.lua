@@ -722,11 +722,6 @@ do
 			end
 		end
 
-		-- pickupable items with store flag
-		if not isVirtual and isPickupable and item:isStoreItem() then
-			response[#response + 1] = "\nThis item cannot be traded."
-		end
-
 		-- turn response into a single string
 		return table.concat(response, "")
 	end
