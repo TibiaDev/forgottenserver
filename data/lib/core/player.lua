@@ -315,60 +315,8 @@ function Player.getWeaponType(self)
 	return WEAPON_NONE
 end
 
-function Player.updateKillTracker(self, monster, corpse)
-	local monsterType = monster:getType()
-	if not monsterType then
-		return false
-	end
-
-	local msg = NetworkMessage()
-	msg:addByte(0xD1)
-	msg:addString(monster:getName())
-
-	local monsterOutfit = monsterType:getOutfit()
-	msg:addU16(monsterOutfit.lookType or 19)
-	msg:addByte(monsterOutfit.lookHead)
-	msg:addByte(monsterOutfit.lookBody)
-	msg:addByte(monsterOutfit.lookLegs)
-	msg:addByte(monsterOutfit.lookFeet)
-	msg:addByte(monsterOutfit.lookAddons)
-
-	local corpseSize = corpse:getSize()
-	msg:addByte(corpseSize)
-	for index = corpseSize - 1, 0, -1 do
-		msg:addItem(corpse:getItem(index))
-	end
-
-	local party = self:getParty()
-	if party then
-		local members = party:getMembers()
-		members[#members + 1] = party:getLeader()
-
-		for _, member in ipairs(members) do
-			msg:sendToPlayer(member)
-		end
-	else
-		msg:sendToPlayer(self)
-	end
-
-	msg:delete()
-	return true
-end
-
 function Player.getTotalMoney(self)
 	return self:getMoney() + self:getBankBalance()
-end
-
-function Player.setSpecialContainersAvailable(self, available)
-	local msg = NetworkMessage()
-	msg:addByte(0x2A)
-
-	msg:addByte(0x00) -- stash
-	msg:addByte(available and 0x01 or 0x00) -- market
-
-	msg:sendToPlayer(self)
-	msg:delete()
-	return true
 end
 
 function Player.addBankBalance(self, amount)

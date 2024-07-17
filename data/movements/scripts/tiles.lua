@@ -29,7 +29,6 @@ function onStepIn(creature, item, position, fromPosition)
 			local depotItems = creature:getDepotChest(getDepotId(depotItem:getUniqueId()), true):getItemHoldingCount()
 			creature:sendTextMessage(MESSAGE_STATUS_DEFAULT, "Your depot contains " .. depotItems .. " item" .. (depotItems ~= 1 and "s." or "."))
 			creature:addAchievementProgress("Safely Stored Away", 1000)
-			creature:setSpecialContainersAvailable(true)
 			return true
 		end
 	end
@@ -48,12 +47,7 @@ function onStepOut(creature, item, position, fromPosition)
 		return true
 	end
 
-	local isPlayer = creature:isPlayer()
-	if isPlayer then
-		creature:setSpecialContainersAvailable(false)
-	end
-
-	if isPlayer and creature:isInGhostMode() then
+	if creature:isPlayer() and creature:isInGhostMode() then
 		return true
 	end
 
