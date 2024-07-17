@@ -1064,8 +1064,10 @@ uint32_t getIPFromString(const std::string& ipString)
 	uint32_t ip = inet_addr(ipString.c_str());
 	if (ip == INADDR_NONE) {
 		hostent* hostname = gethostbyname(ipString.c_str());
-		if (hostname) {
-			ip = inet_addr(std::string(inet_ntoa(**(in_addr**)hostname->h_addr_list)).c_str());
+		if (hostname && hostname->h_addr_list[0]) {
+			in_addr addr;
+			memcpy(&addr, hostname->h_addr_list[0], sizeof(in_addr));
+			ip = inet_addr(inet_ntoa(addr));
 		}
 	}
 

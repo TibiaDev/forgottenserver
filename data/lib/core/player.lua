@@ -315,60 +315,8 @@ function Player.getWeaponType(self)
 	return WEAPON_NONE
 end
 
-function Player.updateKillTracker(self, monster, corpse)
-	local monsterType = monster:getType()
-	if not monsterType then
-		return false
-	end
-
-	local msg = NetworkMessage()
-	msg:addByte(0xD1)
-	msg:addString(monster:getName())
-
-	local monsterOutfit = monsterType:getOutfit()
-	msg:addU16(monsterOutfit.lookType or 19)
-	msg:addByte(monsterOutfit.lookHead)
-	msg:addByte(monsterOutfit.lookBody)
-	msg:addByte(monsterOutfit.lookLegs)
-	msg:addByte(monsterOutfit.lookFeet)
-	msg:addByte(monsterOutfit.lookAddons)
-
-	local corpseSize = corpse:getSize()
-	msg:addByte(corpseSize)
-	for index = corpseSize - 1, 0, -1 do
-		msg:addItem(corpse:getItem(index))
-	end
-
-	local party = self:getParty()
-	if party then
-		local members = party:getMembers()
-		members[#members + 1] = party:getLeader()
-
-		for _, member in ipairs(members) do
-			msg:sendToPlayer(member)
-		end
-	else
-		msg:sendToPlayer(self)
-	end
-
-	msg:delete()
-	return true
-end
-
 function Player.getTotalMoney(self)
 	return self:getMoney() + self:getBankBalance()
-end
-
-function Player.setSpecialContainersAvailable(self, available)
-	local msg = NetworkMessage()
-	msg:addByte(0x2A)
-
-	msg:addByte(0x00) -- stash
-	msg:addByte(available and 0x01 or 0x00) -- market
-
-	msg:sendToPlayer(self)
-	msg:delete()
-	return true
 end
 
 function Player.addBankBalance(self, amount)
@@ -486,42 +434,6 @@ function Player.sendUpdateQuestTracker(self, mission)
 	return true
 end
 
-function Player.getBestiaryKills(self, raceId)
-	return math.max(0, self:getStorageValue(PlayerStorageKeys.bestiaryKillsBase + raceId))
-end
-
-function Player.setBestiaryKills(self, raceId, value)
-	return self:setStorageValue(PlayerStorageKeys.bestiaryKillsBase + raceId, value)
-end
-
-function Player.addBestiaryKills(self, raceId)
-	local monsterType = MonsterType(raceId)
-	if not monsterType then
-		return false
-	end
-
-	local kills = self:getBestiaryKills(raceId)
-	local newKills = kills + 1
-	local bestiaryInfo = monsterType:getBestiaryInfo()
-	for _, totalKills in pairs({bestiaryInfo.prowess, bestiaryInfo.expertise, bestiaryInfo.mastery}) do
-		if kills == 0 or (kills < totalKills and newKills >= totalKills) then
-			self:sendTextMessage(MESSAGE_EVENT_DEFAULT, string.format("You unlocked details for the creature %s.", monsterType:getName()))
-			self:sendBestiaryMilestoneReached(raceId)
-			break
-		end
-	end
-	return self:setBestiaryKills(raceId, newKills)
-end
-
-function Player.sendBestiaryMilestoneReached(self, raceId)
-	local msg = NetworkMessage()
-	msg:addByte(0xD9)
-	msg:addU16(raceId)
-	msg:sendToPlayer(self)
-	msg:delete()
-	return true
-end
-
 local function getStaminaBonus(staminaMinutes)
 	if staminaMinutes > 2340 then
 		return 150
@@ -557,19 +469,6 @@ function Player.updateClientExpDisplay(self)
 	-- Low level bonus
 	local levelBonus = self:calculateLowLevelBonus(level)
 	self:setClientLowLevelBonusDisplay(levelBonus)
-	return true
-end
-
-function Player.takeScreenshot(self, screenshotType, ignoreConfig)
-	if not ignoreConfig and (screenshotType < SCREENSHOT_TYPE_FIRST or screenshotType > SCREENSHOT_TYPE_LAST) then
-		return false
-	end
-
-	local msg = NetworkMessage()
-	msg:addByte(0x75)
-	msg:addByte(screenshotType)
-	msg:sendToPlayer(self)
-	msg:delete()
 	return true
 end
 

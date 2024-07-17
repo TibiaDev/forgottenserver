@@ -166,7 +166,7 @@ private:
 	void sendCreatureOutfit(const Creature* creature, const Outfit_t& outfit);
 	void sendStats();
 	void sendTextMessage(const TextMessage& message);
-	void sendReLoginWindow(uint8_t unfairFightReduction);
+	void sendReLoginWindow();
 
 	void sendTutorial(uint8_t tutorialId);
 	void sendAddMarker(const Position& pos, uint8_t markType, const std::string& desc);
@@ -214,9 +214,9 @@ private:
 	                      int32_t oldStackPos, bool teleport);
 
 	// containers
-	void sendAddContainerItem(uint8_t cid, uint16_t slot, const Item* item);
+	void sendAddContainerItem(uint8_t cid, const Item* item);
 	void sendUpdateContainerItem(uint8_t cid, uint16_t slot, const Item* item);
-	void sendRemoveContainerItem(uint8_t cid, uint16_t slot, const Item* lastItem);
+	void sendRemoveContainerItem(uint8_t cid, uint16_t slot);
 
 	void sendContainer(uint8_t cid, const Container* container, bool hasParent, uint16_t firstIndex);
 	void sendCloseContainer(uint8_t cid);

@@ -29,16 +29,6 @@ function onDeath(player, corpse, killer, mostDamageKiller, lastHitUnjustified, m
 	local byPlayer, killerName = getKiller(killer)
 	local byPlayerMostDamage, killerNameMostDamage = getKiller(mostDamageKiller)
 
-	player:takeScreenshot(byPlayer and SCREENSHOT_TYPE_DEATHPVP or SCREENSHOT_TYPE_DEATHPVE)
-
-	if byPlayer then
-		killer:takeScreenshot(SCREENSHOT_TYPE_PLAYERKILL)
-	end
-
-	if mostDamageKiller and mostDamageKiller:isPlayer() then
-		mostDamageKiller:takeScreenshot(SCREENSHOT_TYPE_PLAYERKILL)
-	end
-
 	if not deathListEnabled then
 		return
 	end

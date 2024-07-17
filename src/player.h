@@ -782,10 +782,10 @@ public:
 			client->sendTextMessage(message);
 		}
 	}
-	void sendReLoginWindow(uint8_t unfairFightReduction) const
+	void sendReLoginWindow() const
 	{
 		if (client) {
-			client->sendReLoginWindow(unfairFightReduction);
+			client->sendReLoginWindow();
 		}
 	}
 	void sendTextWindow(Item* item, uint16_t maxlen, bool canWrite) const
@@ -834,6 +834,12 @@ public:
 	{
 		if (client) {
 			client->sendCloseTrade();
+		}
+	}
+	void sendWorldLight(LightInfo lightInfo)
+	{
+		if (client) {
+			client->sendWorldLight(lightInfo);
 		}
 	}
 	void sendChannelsDialog()
