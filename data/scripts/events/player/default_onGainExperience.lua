@@ -80,12 +80,12 @@ function message.onGainExperience(player, source, exp, rawExp, sendText)
 	if sendText and exp ~= 0 then
 		local pos = player:getPosition()
 		local expString = exp .. (exp ~= 1 and " experience points." or " experience point.")
-		player:sendTextMessage(MESSAGE_EXPERIENCE, "You gained " .. expString, pos, exp, TEXTCOLOR_WHITE_EXP)
+		player:sendTextMessage(MESSAGE_STATUS_DEFAULT, "You gained " .. expString, pos, exp, TEXTCOLOR_WHITE_EXP)
 
 		local spectators = Game.getSpectators(pos, false, true)
 		for _, spectator in ipairs(spectators) do
 			if spectator ~= player then
-				spectator:sendTextMessage(MESSAGE_EXPERIENCE_OTHERS, player:getName() .. " gained " .. expString)
+				spectator:sendTextMessage(MESSAGE_STATUS_DEFAULT, player:getName() .. " gained " .. expString)
 			end
 		end
 	end
