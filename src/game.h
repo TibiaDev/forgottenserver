@@ -379,6 +379,7 @@ public:
 	void playerEnableSharedPartyExperience(uint32_t playerId, bool sharedExpActive);
 	
 	void parsePlayerExtendedOpcode(uint32_t playerId, uint8_t opcode, const std::string& buffer);
+	void parsePlayerNetworkMessage(uint32_t playerId, uint8_t recvByte, NetworkMessage* msg);
 
 	void cleanup();
 	void shutdown();

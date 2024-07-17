@@ -686,6 +686,9 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 			break;
 
 		default:
+			g_dispatcher.addTask([=, playerID = player->getID(), msg = new NetworkMessage(msg)]() {
+				g_game.parsePlayerNetworkMessage(playerID, recvbyte, msg);
+			});
 			break;
 	}
 
