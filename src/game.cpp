@@ -4809,16 +4809,6 @@ void Game::playerReportRuleViolation(uint32_t playerId, const std::string& targe
 	g_events->eventPlayerOnReportRuleViolation(player, targetName, reportType, reportReason, comment, translation);
 }
 
-void Game::playerReportBug(uint32_t playerId, const std::string& message)
-{
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
-
-	g_events->eventPlayerOnReportBug(player, message);
-}
-
 void Game::playerDebugAssert(uint32_t playerId, const std::string& assertLine, const std::string& date,
                              const std::string& description, const std::string& comment)
 {

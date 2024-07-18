@@ -98,7 +98,6 @@ private:
 	void parseAttack(NetworkMessage& msg);
 	void parseFollow(NetworkMessage& msg);
 
-	void parseBugReport(NetworkMessage& msg);
 	void parseDebugAssert(NetworkMessage& msg);
 	void parseRuleViolationReport(NetworkMessage& msg);
 

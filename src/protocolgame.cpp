@@ -670,9 +670,7 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 		// case 0xE0: break; // premium shop (?)
 		// case 0xE4: break; // buy charm rune
 		// case 0xE5: break; // request character info (cyclopedia)
-		case 0xE6:
-			parseBugReport(msg);
-			break;
+		// case 0xE6: break // parse bug report
 		case 0xE7: /* thank you */
 			break;
 		case 0xE8:
@@ -1238,15 +1236,6 @@ void ProtocolGame::parseRuleViolationReport(NetworkMessage& msg)
 	g_dispatcher.addTask([=, playerID = player->getID(), targetName = std::string{targetName},
 	                      comment = std::string{comment}, translation = std::string{translation}]() {
 		g_game.playerReportRuleViolation(playerID, targetName, reportType, reportReason, comment, translation);
-	});
-}
-
-void ProtocolGame::parseBugReport(NetworkMessage& msg)
-{
-	auto message = msg.getString();
-
-	g_dispatcher.addTask([=, playerID = player->getID(), message = std::string{message}]() {
-		g_game.playerReportBug(playerID, message);
 	});
 }
 
