@@ -523,6 +523,10 @@ bool IOLoginData::saveItems(const Player* player, const ItemBlockList& itemList,
 		                                     db.escapeString(propWriteStream.getStream())))) {
 			return false;
 		}
+
+		if (Container* container = item->getContainer()) {
+			containers.emplace_back(container, runningId);
+		}
 	}
 
 	for (size_t i = 0; i < containers.size(); i++) {
