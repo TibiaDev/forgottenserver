@@ -1780,14 +1780,14 @@ void Player::removeExperience(uint64_t exp, bool sendText /* = false*/)
 	sendStats();
 }
 
-uint16_t Player::getBasisPointLevel(uint64_t count, uint64_t nextLevelCount)
+uint8_t Player::getBasisPointLevel(uint64_t count, uint64_t nextLevelCount)
 {
 	if (nextLevelCount == 0) {
 		return 0;
 	}
 
-	uint16_t result = ((count * 10000.) / nextLevelCount);
-	if (result > 10000) {
+	uint8_t result = (count * 100) / nextLevelCount;
+	if (result > 100) {
 		return 0;
 	}
 	return result;
