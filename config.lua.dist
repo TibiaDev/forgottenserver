@@ -174,3 +174,14 @@ ownerName = ""
 ownerEmail = ""
 url = "https://otland.net/"
 location = "Sweden"
+
+-- MySQL
+mysqlHost = "127.0.0.1"
+mysqlUser = ""
+mysqlPass = ""
+mysqlDatabase = "tfs"
+mysqlPort = 3306
+mysqlSock = ""
+
+--features
+enableMounts = true
