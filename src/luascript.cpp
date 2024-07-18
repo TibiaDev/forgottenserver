@@ -2054,6 +2054,7 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(L, RELOAD_TYPE_GLOBALEVENTS);
 	registerEnum(L, RELOAD_TYPE_ITEMS);
 	registerEnum(L, RELOAD_TYPE_MONSTERS);
+	registerEnum(L, RELOAD_TYPE_MOUNTS);
 	registerEnum(L, RELOAD_TYPE_MOVEMENTS);
 	registerEnum(L, RELOAD_TYPE_NPCS);
 	registerEnum(L, RELOAD_TYPE_QUESTS);
@@ -2211,6 +2212,7 @@ void LuaScriptInterface::registerFunctions()
 	registerEnumIn(L, "configKeys", ConfigManager::STAMINA_REGEN_PREMIUM);
 	registerEnumIn(L, "configKeys", ConfigManager::HOUSE_DOOR_SHOW_PRICE);
 	registerEnumIn(L, "configKeys", ConfigManager::MONSTER_OVERSPAWN);
+	registerEnumIn(L, "configKeys", ConfigManager::ENABLE_MOUNTS);
 
 	registerEnumIn(L, "configKeys", ConfigManager::QUEST_TRACKER_FREE_LIMIT);
 	registerEnumIn(L, "configKeys", ConfigManager::QUEST_TRACKER_PREMIUM_LIMIT);
@@ -2259,6 +2261,10 @@ void LuaScriptInterface::registerFunctions()
 
 	registerMethod(L, "Game", "getTowns", LuaScriptInterface::luaGameGetTowns);
 	registerMethod(L, "Game", "getHouses", LuaScriptInterface::luaGameGetHouses);
+
+	// feature: enablemounts
+	registerMethod(L, "Game", "getMounts", LuaScriptInterface::luaGameGetMounts);
+	//
 
 	registerMethod(L, "Game", "getGameState", LuaScriptInterface::luaGameGetGameState);
 	registerMethod(L, "Game", "setGameState", LuaScriptInterface::luaGameSetGameState);
@@ -2662,6 +2668,13 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod(L, "Player", "hasOutfit", LuaScriptInterface::luaPlayerHasOutfit);
 	registerMethod(L, "Player", "canWearOutfit", LuaScriptInterface::luaPlayerCanWearOutfit);
 	registerMethod(L, "Player", "sendOutfitWindow", LuaScriptInterface::luaPlayerSendOutfitWindow);
+
+	//feature: enablemounts
+	registerMethod(L, "Player", "addMount", LuaScriptInterface::luaPlayerAddMount);
+	registerMethod(L, "Player", "removeMount", LuaScriptInterface::luaPlayerRemoveMount);
+	registerMethod(L, "Player", "hasMount", LuaScriptInterface::luaPlayerHasMount);
+	registerMethod(L, "Player", "toggleMount", LuaScriptInterface::luaPlayerToggleMount);
+	//
 
 	registerMethod(L, "Player", "getPremiumEndsAt", LuaScriptInterface::luaPlayerGetPremiumEndsAt);
 	registerMethod(L, "Player", "setPremiumEndsAt", LuaScriptInterface::luaPlayerSetPremiumEndsAt);
@@ -4572,6 +4585,28 @@ int LuaScriptInterface::luaGameGetHouses(lua_State* L)
 		tfs::lua::setMetatable(L, -1, "House");
 		lua_rawseti(L, -2, ++index);
 	}
+	return 1;
+}
+
+int LuaScriptInterface::luaGameGetMounts(lua_State* L)
+{
+	// Game.getMounts()
+	const auto& mounts = g_game.mounts.getMounts();
+	lua_createtable(L, mounts.size(), 0);
+
+	int index = 0;
+	for (const auto& mount : mounts) {
+		lua_createtable(L, 0, 5);
+
+		setField(L, "name", mount.name);
+		setField(L, "speed", mount.speed);
+		setField(L, "clientId", mount.clientId);
+		setField(L, "id", mount.id);
+		setField(L, "premium", mount.premium);
+
+		lua_rawseti(L, -2, ++index);
+	}
+
 	return 1;
 }
 
@@ -9712,6 +9747,92 @@ int LuaScriptInterface::luaPlayerSendOutfitWindow(lua_State* L)
 	} else {
 		lua_pushnil(L);
 	}
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerAddMount(lua_State* L)
+{
+	// player:addMount(mountId or mountName)
+	Player* player = tfs::lua::getUserdata<Player>(L, 1);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	uint16_t mountId;
+	if (isNumber(L, 2)) {
+		mountId = tfs::lua::getNumber<uint16_t>(L, 2);
+	} else {
+		Mount* mount = g_game.mounts.getMountByName(tfs::lua::getString(L, 2));
+		if (!mount) {
+			lua_pushnil(L);
+			return 1;
+		}
+		mountId = mount->id;
+	}
+	tfs::lua::pushBoolean(L, player->tameMount(mountId));
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerRemoveMount(lua_State* L)
+{
+	// player:removeMount(mountId or mountName)
+	Player* player = tfs::lua::getUserdata<Player>(L, 1);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	uint16_t mountId;
+	if (isNumber(L, 2)) {
+		mountId = tfs::lua::getNumber<uint16_t>(L, 2);
+	} else {
+		Mount* mount = g_game.mounts.getMountByName(tfs::lua::getString(L, 2));
+		if (!mount) {
+			lua_pushnil(L);
+			return 1;
+		}
+		mountId = mount->id;
+	}
+	tfs::lua::pushBoolean(L, player->untameMount(mountId));
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerHasMount(lua_State* L)
+{
+	// player:hasMount(mountId or mountName)
+	const Player* player = tfs::lua::getUserdata<const Player>(L, 1);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	Mount* mount = nullptr;
+	if (isNumber(L, 2)) {
+		mount = g_game.mounts.getMountByID(tfs::lua::getNumber<uint16_t>(L, 2));
+	} else {
+		mount = g_game.mounts.getMountByName(tfs::lua::getString(L, 2));
+	}
+
+	if (mount) {
+		tfs::lua::pushBoolean(L, player->hasMount(mount));
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerToggleMount(lua_State* L)
+{
+	// player:toggleMount(mount)
+	Player* player = tfs::lua::getUserdata<Player>(L, 1);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	bool mount = tfs::lua::getBoolean(L, 2);
+	tfs::lua::pushBoolean(L, player->toggleMount(mount));
 	return 1;
 }
 

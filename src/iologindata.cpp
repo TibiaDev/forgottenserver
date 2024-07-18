@@ -494,6 +494,16 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result)
 		} while (result->next());
 	}
 
+	if (getBoolean(ConfigManager::ENABLE_MOUNTS)) {
+		// load mounts
+		if ((result = db.storeQuery(
+		         fmt::format("SELECT `mount_id` FROM `player_mounts` WHERE `player_id` = {:d}", player->getGUID())))) {
+			do {
+				player->tameMount(result->getNumber<uint16_t>("mount_id"));
+			} while (result->next());
+		}
+	}
+
 	player->updateBaseSpeed();
 	player->updateInventoryWeight();
 	player->updateItemsLight(true);
@@ -747,6 +757,25 @@ bool IOLoginData::savePlayer(Player* player)
 
 	if (!storageQuery.execute()) {
 		return false;
+	}
+
+	if (getBoolean(ConfigManager::ENABLE_MOUNTS)) {
+		// save mounts
+		if (!db.executeQuery(fmt::format("DELETE FROM `player_mounts` WHERE `player_id` = {:d}", player->getGUID()))) {
+			return false;
+		}
+
+		DBInsert mountQuery("INSERT INTO `player_mounts` (`player_id`, `mount_id`) VALUES ");
+
+		for (const auto& it : player->mounts) {
+			if (!mountQuery.addRow(fmt::format("{:d}, {:d}", player->getGUID(), it))) {
+				return false;
+			}
+		}
+
+		if (!mountQuery.execute()) {
+			return false;
+		}
 	}
 
 	// End the transaction

@@ -80,6 +80,10 @@ void Game::setGameState(GameState_t newState)
 
 			map.spawns.startup();
 
+			if (getBoolean(ConfigManager::ENABLE_MOUNTS)) {
+				mounts.loadFromXml();
+			}
+
 			loadPlayersRecord();
 
 			g_globalEvents->startup();
@@ -3290,7 +3294,7 @@ void Game::playerRequestOutfit(uint32_t playerId)
 	player->sendOutfitWindow();
 }
 
-void Game::playerChangeOutfit(uint32_t playerId, Outfit_t outfit)
+void Game::playerChangeOutfit(uint32_t playerId, Outfit_t outfit, bool randomizeMount /* = false*/)
 {
 	if (!getBoolean(ConfigManager::ALLOW_CHANGEOUTFIT)) {
 		return;
@@ -3299,6 +3303,43 @@ void Game::playerChangeOutfit(uint32_t playerId, Outfit_t outfit)
 	Player* player = getPlayerByID(playerId);
 	if (!player) {
 		return;
+	}
+
+	if (getBoolean(ConfigManager::ENABLE_MOUNTS)) {
+		player->randomizeMount = randomizeMount;
+
+		const Outfit* playerOutfit = Outfits::getInstance().getOutfitByLookType(player->getSex(), outfit.lookType);
+		if (!playerOutfit) {
+			outfit.lookMount = 0;
+		}
+
+		if (outfit.lookMount != 0) {
+			Mount* mount = mounts.getMountByClientID(outfit.lookMount);
+			if (!mount) {
+				return;
+			}
+
+			if (!player->hasMount(mount)) {
+				return;
+			}
+
+			int32_t speedChange = mount->speed;
+			if (player->isMounted()) {
+				Mount* prevMount = mounts.getMountByID(player->getCurrentMount());
+				if (prevMount) {
+					speedChange -= prevMount->speed;
+				}
+			}
+
+			changeSpeed(player, speedChange);
+			player->setCurrentMount(mount->id);
+		} else {
+			if (player->isMounted()) {
+				player->dismount();
+			}
+
+			player->wasMounted = false;
+		}
 	}
 
 	if (player->canWear(outfit.lookType, outfit.lookAddons)) {
@@ -5089,6 +5130,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 			g_weapons->reload();
 			g_weapons->clear(true);
 			g_weapons->loadDefaults();
+			mounts.reload();
 			g_globalEvents->reload();
 			g_events->load();
 			g_chat->load();

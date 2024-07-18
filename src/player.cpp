@@ -4146,6 +4146,167 @@ GuildEmblems_t Player::getGuildEmblem(const Player* player) const
 	return GUILDEMBLEM_NEUTRAL;
 }
 
+uint16_t Player::getRandomMount() const
+{
+	std::vector<uint16_t> mountsId;
+	for (const Mount& mount : g_game.mounts.getMounts()) {
+		if (hasMount(&mount)) {
+			mountsId.push_back(mount.id);
+		}
+	}
+
+	return mountsId[uniform_random(0, mountsId.size() - 1)];
+}
+
+uint16_t Player::getCurrentMount() const { return currentMount; }
+
+void Player::setCurrentMount(uint16_t mountId) { currentMount = mountId; }
+
+bool Player::toggleMount(bool mount)
+{
+	if ((OTSYS_TIME() - lastToggleMount) < 3000 && !wasMounted) {
+		sendCancelMessage(RETURNVALUE_YOUAREEXHAUSTED);
+		return false;
+	}
+
+	if (mount) {
+		if (isMounted()) {
+			return false;
+		}
+
+		if (!group->access && tile->hasFlag(TILESTATE_PROTECTIONZONE)) {
+			sendCancelMessage(RETURNVALUE_ACTIONNOTPERMITTEDINPROTECTIONZONE);
+			return false;
+		}
+
+		const Outfit* playerOutfit = Outfits::getInstance().getOutfitByLookType(getSex(), defaultOutfit.lookType);
+		if (!playerOutfit) {
+			return false;
+		}
+
+		uint16_t currentMountId = getCurrentMount();
+		if (currentMountId == 0) {
+			sendOutfitWindow();
+			return false;
+		}
+
+		if (randomizeMount) {
+			currentMountId = getRandomMount();
+		}
+
+		Mount* currentMount = g_game.mounts.getMountByID(currentMountId);
+		if (!currentMount) {
+			return false;
+		}
+
+		if (!hasMount(currentMount)) {
+			setCurrentMount(0);
+			sendOutfitWindow();
+			return false;
+		}
+
+		if (currentMount->premium && !isPremium()) {
+			sendCancelMessage(RETURNVALUE_YOUNEEDPREMIUMACCOUNT);
+			return false;
+		}
+
+		if (hasCondition(CONDITION_OUTFIT)) {
+			sendCancelMessage(RETURNVALUE_NOTPOSSIBLE);
+			return false;
+		}
+
+		defaultOutfit.lookMount = currentMount->clientId;
+
+		if (currentMount->speed != 0) {
+			g_game.changeSpeed(this, currentMount->speed);
+		}
+	} else {
+		if (!isMounted()) {
+			return false;
+		}
+
+		dismount();
+	}
+
+	g_game.internalCreatureChangeOutfit(this, defaultOutfit);
+	lastToggleMount = OTSYS_TIME();
+	return true;
+}
+
+bool Player::tameMount(uint16_t mountId)
+{
+	if (!g_game.mounts.getMountByID(mountId)) {
+		return false;
+	}
+
+	Mount* mount = g_game.mounts.getMountByID(mountId);
+	if (hasMount(mount)) {
+		return false;
+	}
+
+	mounts.insert(mountId);
+	return true;
+}
+
+bool Player::untameMount(uint16_t mountId)
+{
+	if (!g_game.mounts.getMountByID(mountId)) {
+		return false;
+	}
+
+	Mount* mount = g_game.mounts.getMountByID(mountId);
+	if (!hasMount(mount)) {
+		return false;
+	}
+
+	mounts.erase(mountId);
+
+	if (getCurrentMount() == mountId) {
+		if (isMounted()) {
+			dismount();
+			g_game.internalCreatureChangeOutfit(this, defaultOutfit);
+		}
+
+		setCurrentMount(0);
+	}
+
+	return true;
+}
+
+bool Player::hasMount(const Mount* mount) const
+{
+	if (isAccessPlayer()) {
+		return true;
+	}
+
+	if (mount->premium && !isPremium()) {
+		return false;
+	}
+
+	return mounts.find(mount->id) != mounts.end();
+}
+
+bool Player::hasMounts() const
+{
+	for (const Mount& mount : g_game.mounts.getMounts()) {
+		if (hasMount(&mount)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void Player::dismount()
+{
+	Mount* mount = g_game.mounts.getMountByID(getCurrentMount());
+	if (mount && mount->speed > 0) {
+		g_game.changeSpeed(this, -mount->speed);
+	}
+
+	defaultOutfit.lookMount = 0;
+}
+
+
 void Player::sendClosePrivate(uint16_t channelId)
 {
 	if (channelId == CHANNEL_GUILD || channelId == CHANNEL_PARTY) {

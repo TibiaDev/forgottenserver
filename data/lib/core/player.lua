@@ -319,6 +319,13 @@ function Player.getTotalMoney(self)
 	return self:getMoney() + self:getBankBalance()
 end
 
+function Player.addAllMounts(self)
+	local mounts = Game.getMounts()
+	for mount = 1, #mounts do
+		self:addMount(mounts[mount].id)
+	end
+end
+
 function Player.addBankBalance(self, amount)
 	self:setBankBalance(self:getBankBalance() + amount)
 end

@@ -512,6 +512,7 @@ struct Outfit_t
 	uint8_t lookLegs = 0;
 	uint8_t lookFeet = 0;
 	uint8_t lookAddons = 0;
+	uint16_t lookMount = 0;
 };
 
 struct LightInfo

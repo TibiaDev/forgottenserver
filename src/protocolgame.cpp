@@ -972,6 +972,10 @@ void ProtocolGame::parseSetOutfit(NetworkMessage& msg)
 	newOutfit.lookFeet = msg.getByte();
 	newOutfit.lookAddons = msg.getByte();
 
+	if (getBoolean(ConfigManager::ENABLE_MOUNTS)) {
+		newOutfit.lookMount = msg.get<uint16_t>();
+	}
+
 	g_dispatcher.addTask(
 		[=, playerID = player->getID()]() { g_game.playerChangeOutfit(playerID, newOutfit); });
 }
@@ -2254,6 +2258,13 @@ void ProtocolGame::sendOutfitWindow()
 		currentOutfit = newOutfit;
 	}
 
+	if (getBoolean(ConfigManager::ENABLE_MOUNTS)) {
+		Mount* currentMount = g_game.mounts.getMountByID(player->getCurrentMount());
+		if (currentMount) {
+			currentOutfit.lookMount = currentMount->clientId;
+		}
+	}
+
 	AddOutfit(msg, currentOutfit);
 
 	std::vector<ProtocolOutfit> protocolOutfits;
@@ -2278,6 +2289,21 @@ void ProtocolGame::sendOutfitWindow()
 		msg.add<uint16_t>(outfit.lookType);
 		msg.addString(outfit.name);
 		msg.addByte(outfit.addons);
+	}
+
+	if (getBoolean(ConfigManager::ENABLE_MOUNTS)) {
+		std::vector<const Mount*> mounts;
+		for (const Mount& mount : g_game.mounts.getMounts()) {
+			if (player->hasMount(&mount)) {
+				mounts.push_back(&mount);
+			}
+		}
+
+		msg.addByte(mounts.size());
+		for (const Mount* mount : mounts) {
+			msg.add<uint16_t>(mount->clientId);
+			msg.addString(mount->name);
+		}
 	}
 
 	writeToOutputBuffer(msg);
@@ -2406,6 +2432,11 @@ void ProtocolGame::AddOutfit(NetworkMessage& msg, const Outfit_t& outfit)
 		msg.addByte(outfit.lookAddons);
 	} else {
 		msg.addItemId(outfit.lookTypeEx);
+	}
+
+	if (getBoolean(ConfigManager::ENABLE_MOUNTS)) {
+		// mount
+		msg.add<uint16_t>(outfit.lookMount);
 	}
 }
 

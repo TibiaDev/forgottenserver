@@ -47,6 +47,7 @@ enum boolean_config_t
 	MANASHIELD_BREAKABLE,
 	CHECK_DUPLICATE_STORAGE_KEYS,
 	MONSTER_OVERSPAWN,
+	ENABLE_MOUNTS,
 
 	LAST_BOOLEAN_CONFIG /* this must be the last one */
 };

@@ -12,6 +12,7 @@
 #include "game.h"
 #include "globalevent.h"
 #include "monsters.h"
+#include "mounts.h"
 #include "movement.h"
 #include "npc.h"
 #include "scheduler.h"
@@ -85,6 +86,11 @@ void sighupHandler()
 	g_weapons->reload();
 	g_weapons->loadDefaults();
 	std::cout << "Reloaded weapons." << std::endl;
+
+	if (getBoolean(ConfigManager::ENABLE_MOUNTS)) {
+		g_game.mounts.reload();
+		std::cout << "Reloaded mounts." << std::endl;
+	}
 
 	g_globalEvents->reload();
 	std::cout << "Reloaded globalevents." << std::endl;
