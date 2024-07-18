@@ -1692,7 +1692,7 @@ void Player::addExperience(Creature* source, uint64_t exp, bool sendText /* = fa
 	}
 
 	if (nextLevelExp > currLevelExp) {
-		levelPercent = Player::getBasisPointLevel(experience - currLevelExp, nextLevelExp - currLevelExp) / 100;
+		levelPercent = Player::getBasisPointLevel(experience - currLevelExp, nextLevelExp - currLevelExp);
 	} else {
 		levelPercent = 0;
 	}
@@ -1773,21 +1773,21 @@ void Player::removeExperience(uint64_t exp, bool sendText /* = false*/)
 
 	uint64_t nextLevelExp = Player::getExpForLevel(level + 1);
 	if (nextLevelExp > currLevelExp) {
-		levelPercent = Player::getBasisPointLevel(experience - currLevelExp, nextLevelExp - currLevelExp) / 100;
+		levelPercent = Player::getBasisPointLevel(experience - currLevelExp, nextLevelExp - currLevelExp);
 	} else {
 		levelPercent = 0;
 	}
 	sendStats();
 }
 
-uint16_t Player::getBasisPointLevel(uint64_t count, uint64_t nextLevelCount)
+uint8_t Player::getBasisPointLevel(uint64_t count, uint64_t nextLevelCount)
 {
 	if (nextLevelCount == 0) {
 		return 0;
 	}
 
-	uint16_t result = ((count * 10000.) / nextLevelCount);
-	if (result > 10000) {
+	uint8_t result = (count * 100) / nextLevelCount;
+	if (result > 100) {
 		return 0;
 	}
 	return result;
@@ -2010,7 +2010,7 @@ void Player::death(Creature* lastHitCreature)
 			uint64_t currLevelExp = Player::getExpForLevel(level);
 			uint64_t nextLevelExp = Player::getExpForLevel(level + 1);
 			if (nextLevelExp > currLevelExp) {
-				levelPercent = Player::getBasisPointLevel(experience - currLevelExp, nextLevelExp - currLevelExp) / 100;
+				levelPercent = Player::getBasisPointLevel(experience - currLevelExp, nextLevelExp - currLevelExp);
 			} else {
 				levelPercent = 0;
 			}
