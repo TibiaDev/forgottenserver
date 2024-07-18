@@ -486,6 +486,28 @@ public:
 	void removeTileToClean(Tile* tile) { tilesToClean.erase(tile); }
 	void clearTilesToClean() { tilesToClean.clear(); }
 
+	Direction getReverseDirection(Direction direction) {
+		if (direction == DIRECTION_WEST) {
+			return DIRECTION_EAST;
+		} else if (direction == DIRECTION_EAST) {
+			return DIRECTION_WEST;
+		} else if (direction == DIRECTION_NORTH) {
+			return DIRECTION_SOUTH;
+		} else if (direction == DIRECTION_SOUTH) {
+			return DIRECTION_NORTH;
+		} else if (direction == DIRECTION_NORTHWEST) {
+			return DIRECTION_SOUTHEAST;
+		} else if (direction == DIRECTION_NORTHEAST) {
+			return DIRECTION_SOUTHWEST;
+		} else if (direction == DIRECTION_SOUTHWEST) {
+			return DIRECTION_NORTHWEST;
+		} else if (direction == DIRECTION_SOUTHWEST) {
+			return DIRECTION_NORTHEAST;
+		} else {
+			return DIRECTION_NONE;
+		}
+	}
+
 private:
 	bool playerSaySpell(Player* player, SpeakClasses type, const std::string& text);
 	void playerWhisper(Player* player, const std::string& text);

@@ -1937,6 +1937,9 @@ void Monster::updateLookDirection()
 			// target to south-east
 			newDir = DIRECTION_EAST;
 		}
+
+		// todo: verify why we need reverse here?
+		newDir = g_game.getReverseDirection(newDir);
 	}
 
 	g_game.internalCreatureTurn(this, newDir);
