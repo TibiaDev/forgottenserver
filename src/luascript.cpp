@@ -55,6 +55,33 @@ LuaEnvironment g_luaEnvironment;
 
 namespace {
 
+#ifndef LUAJIT_VERSION
+#if LUA_VERSION_NUM < 502
+extern "C" {
+void luaL_traceback(lua_State* L, lua_State* L1, const char* msg, int level)
+{
+	if (msg) {
+		lua_pushfstring(L, "%s\n", msg);
+	}
+	lua_getfield(L1, LUA_GLOBALSINDEX, "debug");
+	if (!lua_istable(L1, -1)) {
+		lua_pop(L1, 1);
+		return;
+	}
+	lua_getfield(L1, -1, "traceback");
+	if (!lua_isfunction(L1, -1)) {
+		lua_pop(L1, 2);
+		return;
+	}
+	lua_pushvalue(L1, L);
+	lua_pushinteger(L1, level);
+	lua_call(L1, 2, 1);
+	lua_remove(L1, -2); // remove 'debug'
+}
+}
+#endif
+#endif
+
 constexpr int32_t EVENT_ID_LOADING = 1;
 
 enum LuaDataType
@@ -8776,8 +8803,8 @@ int LuaScriptInterface::luaPlayerAddOfflineTrainingTries(lua_State* L)
 	// player:addOfflineTrainingTries(skillType, tries)
 	Player* player = tfs::lua::getUserdata<Player>(L, 1);
 	if (player) {
-		skills_t skillType = tfs::lua::getNumber<skills_t>(L, 2);
-		uint64_t tries = tfs::lua::getNumber<uint64_t>(L, 3);
+		tfs::lua::getNumber<skills_t>(L, 2);
+		tfs::lua::getNumber<uint64_t>(L, 3);
 	} else {
 		lua_pushnil(L);
 	}

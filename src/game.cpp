@@ -1939,25 +1939,17 @@ void Game::playerRequestChannels(uint32_t playerId)
 
 void Game::playerOpenChannel(uint32_t playerId, uint16_t channelId)
 {
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
+    Player* player = getPlayerByID(playerId);
+    if (!player) {
+        return;
+    }
 
-	ChatChannel* channel = g_chat->addUserToChannel(*player, channelId);
-	if (!channel) {
-		return;
-	}
+    ChatChannel* channel = g_chat->addUserToChannel(*player, channelId);
+    if (!channel) {
+        return;
+    }
 
-	const InvitedMap* invitedUsers = channel->getInvitedUsers();
-	const UsersMap* users;
-	if (!channel->isPublicChannel()) {
-		users = &channel->getUsers();
-	} else {
-		users = nullptr;
-	}
-
-	player->sendChannel(channel->getId(), channel->getName());
+    player->sendChannel(channel->getId(), channel->getName());
 }
 
 void Game::playerCloseChannel(uint32_t playerId, uint16_t channelId)
