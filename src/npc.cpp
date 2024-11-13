@@ -187,7 +187,7 @@ Npc* Npc::createNpc(const std::string& name)
 		}
 	}
 	Npc* npc = new Npc(name);
-	npc->setName(name);
+	npc->setName(npcType->name);
 	npc->loaded = true;
 	npc->npcType = npcType;
 	npc->loadNpcTypeInfo();
@@ -407,6 +407,17 @@ void Npc::loadNpcTypeInfo()
 	healthMax = npcType->healthMax;
 	sightX = npcType->sightX;
 	sightY = npcType->sightY;
+}
+
+void Npc::goToFollowCreature()
+{
+	if (!followCreature) {
+		return;
+	}
+
+	FindPathParams fpp;
+	getPathSearchParams(followCreature, fpp);
+	updateFollowCreaturePath(fpp);
 }
 
 void Npc::onCreatureAppear(Creature* creature, bool isLogin)

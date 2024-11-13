@@ -175,7 +175,8 @@ public:
 	void startAutoWalk(const std::vector<Direction>& listDir);
 	void addEventWalk(bool firstStep = false);
 	void stopEventWalk();
-	virtual void goToFollowCreature();
+	virtual void goToFollowCreature() = 0;
+	void updateFollowCreaturePath(FindPathParams& fpp);
 
 	// walk events
 	virtual void onWalk(Direction& dir);
@@ -188,7 +189,6 @@ public:
 
 	// follow events
 	virtual void onFollowCreature(const Creature*) {}
-	virtual void onFollowCreatureComplete(const Creature*) {}
 
 	// combat functions
 	Creature* getAttackedCreature() { return attackedCreature; }
@@ -277,10 +277,11 @@ public:
 	virtual void onWalk();
 	virtual bool getNextStep(Direction& dir, uint32_t& flags);
 
-	void onAddTileItem(const Tile* tile, const Position& pos);
-	virtual void onUpdateTileItem(const Tile* tile, const Position& pos, const Item* oldItem, const ItemType& oldType,
-	                              const Item* newItem, const ItemType& newType);
-	virtual void onRemoveTileItem(const Tile* tile, const Position& pos, const ItemType& iType, const Item* item);
+	virtual void onAddTileItem(const Tile*, const Position&) {}
+	virtual void onUpdateTileItem(const Tile*, const Position&, const Item*, const ItemType&, const Item*,
+	                              const ItemType&)
+	{}
+	virtual void onRemoveTileItem(const Tile*, const Position&, const ItemType&, const Item*) {}
 
 	virtual void onCreatureAppear(Creature* creature, bool isLogin);
 	virtual void onRemoveCreature(Creature* creature, bool isLogout);
@@ -311,6 +312,7 @@ public:
 	bool registerCreatureEvent(const std::string& name);
 	bool unregisterCreatureEvent(const std::string& name);
 
+	bool hasParent() const override { return getParent(); }
 	Cylinder* getParent() const override final { return tile; }
 	void setParent(Cylinder* cylinder) override final
 	{
@@ -322,8 +324,6 @@ public:
 
 	Tile* getTile() override final { return tile; }
 	const Tile* getTile() const override final { return tile; }
-
-	int32_t getWalkCache(const Position& pos) const;
 
 	const Position& getLastPosition() const { return lastPosition; }
 	void setLastPosition(Position newLastPos) { lastPosition = newLastPos; }
@@ -350,18 +350,11 @@ public:
 	decltype(auto) getStorageMap() const { return storageMap; }
 
 protected:
-	virtual bool useCacheMap() const { return false; }
-
 	struct CountBlock_t
 	{
 		int32_t total;
 		int64_t ticks;
 	};
-
-	static constexpr int32_t mapWalkWidth = Map::maxViewportX * 2 + 1;
-	static constexpr int32_t mapWalkHeight = Map::maxViewportY * 2 + 1;
-	static constexpr int32_t maxWalkCacheWidth = (mapWalkWidth - 1) / 2;
-	static constexpr int32_t maxWalkCacheHeight = (mapWalkHeight - 1) / 2;
 
 	Position position;
 
@@ -404,9 +397,7 @@ protected:
 	Direction direction = DIRECTION_SOUTH;
 	Skulls_t skull = SKULL_NONE;
 
-	bool localMapCache[mapWalkHeight][mapWalkWidth] = {{false}};
 	bool isInternalRemoved = false;
-	bool isMapLoaded = false;
 	bool isUpdatingPath = false;
 	bool creatureCheck = false;
 	bool inCheckCreaturesVector = false;
@@ -426,9 +417,6 @@ protected:
 	}
 	CreatureEventList getCreatureEvents(CreatureEventType_t type);
 
-	void updateMapCache();
-	void updateTileCache(const Tile* tile, int32_t dx, int32_t dy);
-	void updateTileCache(const Tile* tile, const Position& pos);
 	void onCreatureDisappear(const Creature* creature, bool isLogout);
 	virtual void doAttacking(uint32_t) {}
 	virtual bool hasExtraSwing() { return false; }

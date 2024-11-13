@@ -576,21 +576,55 @@ bool Monster::searchTarget(TargetSearchType_t searchType /*= TARGETSEARCH_DEFAUL
 	return false;
 }
 
-void Monster::onFollowCreatureComplete(const Creature* creature)
+void Monster::goToFollowCreature()
 {
-	if (creature) {
-		auto it = std::find(targetList.begin(), targetList.end(), creature);
-		if (it != targetList.end()) {
-			Creature* target = (*it);
-			targetList.erase(it);
+	if (!followCreature) {
+		return;
+	}
 
-			if (hasFollowPath) {
-				targetList.push_front(target);
-			} else if (!isSummon()) {
-				targetList.push_back(target);
-			} else {
-				target->decrementReferenceCounter();
+	FindPathParams fpp;
+	getPathSearchParams(followCreature, fpp);
+
+	if (!isSummon()) {
+		Direction dir = DIRECTION_NONE;
+
+		if (isFleeing()) {
+			getDistanceStep(followCreature->getPosition(), dir, true);
+		} else if (fpp.maxTargetDist > 1) {
+			if (!getDistanceStep(followCreature->getPosition(), dir)) {
+				// if we can't get anything then let the A* calculate
+				updateFollowCreaturePath(fpp);
+				return;
 			}
+		}
+
+		if (dir != DIRECTION_NONE) {
+			listWalkDir.clear();
+			listWalkDir.push_back(dir);
+
+			hasFollowPath = true;
+			startAutoWalk();
+		}
+	} else {
+		updateFollowCreaturePath(fpp);
+	}
+
+	onFollowCreatureComplete();
+}
+
+void Monster::onFollowCreatureComplete()
+{
+	auto it = std::find(targetList.begin(), targetList.end(), followCreature);
+	if (it != targetList.end()) {
+		Creature* target = (*it);
+		targetList.erase(it);
+
+		if (hasFollowPath) {
+			targetList.push_front(target);
+		} else if (!isSummon()) {
+			targetList.push_back(target);
+		} else {
+			target->decrementReferenceCounter();
 		}
 	}
 }
@@ -683,20 +717,12 @@ void Monster::updateIdleStatus()
 	setIdle(idle);
 }
 
-void Monster::onAddCondition(ConditionType_t type)
-{
-	if (type == CONDITION_FIRE || type == CONDITION_ENERGY || type == CONDITION_POISON) {
-		updateMapCache();
-	}
-
-	updateIdleStatus();
-}
+void Monster::onAddCondition(ConditionType_t) { updateIdleStatus(); }
 
 void Monster::onEndCondition(ConditionType_t type)
 {
 	if (type == CONDITION_FIRE || type == CONDITION_ENERGY || type == CONDITION_POISON) {
 		ignoreFieldDamage = false;
-		updateMapCache();
 	}
 
 	updateIdleStatus();
@@ -1181,7 +1207,6 @@ bool Monster::getNextStep(Direction& direction, uint32_t& flags)
 			} else {
 				if (ignoreFieldDamage) {
 					ignoreFieldDamage = false;
-					updateMapCache();
 				}
 				// target dancing
 				if (attackedCreature && attackedCreature == followCreature) {
@@ -1817,10 +1842,6 @@ bool Monster::canWalkTo(Position pos, Direction direction) const
 {
 	pos = getNextPosition(direction, pos);
 	if (isInSpawnRange(pos)) {
-		if (getWalkCache(pos) == 0) {
-			return false;
-		}
-
 		Tile* tile = g_game.map.getTile(pos);
 		if (tile && !tile->getTopVisibleCreature(this) &&
 		    tile->queryAdd(0, *this, 1, FLAG_PATHFINDING) == RETURNVALUE_NOERROR) {
@@ -1836,6 +1857,7 @@ void Monster::death(Creature*)
 
 	for (Creature* summon : summons) {
 		summon->changeHealth(-summon->getHealth());
+		summon->removeMaster();
 	}
 	summons.clear();
 
@@ -1960,7 +1982,6 @@ void Monster::drainHealth(Creature* attacker, int32_t damage)
 
 	if (damage > 0 && randomStepping) {
 		ignoreFieldDamage = true;
-		updateMapCache();
 	}
 
 	if (isInvisible()) {

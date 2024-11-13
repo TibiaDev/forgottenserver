@@ -1937,7 +1937,7 @@ Connection::Address Player::getIP() const
 
 void Player::death(Creature* lastHitCreature)
 {
-	loginPosition = town->getTemplePosition();
+	loginPosition = town->templePosition;
 
 	if (skillLoss) {
 		uint8_t unfairFightReduction = 100;
@@ -3222,16 +3222,20 @@ bool Player::setAttackedCreature(Creature* creature)
 
 void Player::goToFollowCreature()
 {
-	if (!walkTask) {
-		if ((OTSYS_TIME() - lastFailedFollow) < 2000) {
-			return;
-		}
+	if (walkTask || !followCreature) {
+		return;
+	}
 
-		Creature::goToFollowCreature();
+	if ((OTSYS_TIME() - lastFailedFollow) < 2000) {
+		return;
+	}
 
-		if (followCreature && !hasFollowPath) {
-			lastFailedFollow = OTSYS_TIME();
-		}
+	FindPathParams fpp;
+	getPathSearchParams(followCreature, fpp);
+	updateFollowCreaturePath(fpp);
+
+	if (!hasFollowPath) {
+		lastFailedFollow = OTSYS_TIME();
 	}
 }
 
@@ -3725,8 +3729,8 @@ bool Player::canWear(uint32_t lookType, uint8_t addons) const
 		return true;
 	}
 
-	for (auto& [outfit, addon] : outfits) {
-		if (outfit == lookType) {
+	for (auto& [outfitType, addon] : outfits) {
+		if (outfitType == lookType) {
 			if (addon == addons || addon == 3 || addons == 0) {
 				return true;
 			}
@@ -3747,8 +3751,8 @@ bool Player::hasOutfit(uint32_t lookType, uint8_t addons)
 		return true;
 	}
 
-	for (auto& [outfit, addon] : outfits) {
-		if (outfit == lookType) {
+	for (auto& [outfitType, addon] : outfits) {
+		if (outfitType == lookType) {
 			if (addon == addons || addon == 3 || addons == 0) {
 				return true;
 			}
