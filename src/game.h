@@ -443,9 +443,6 @@ public:
 
 	void startDecay(Item* item);
 
-	int16_t getWorldTime() { return worldTime; }
-	void updateWorldTime();
-
 	void loadMotdNum();
 	void saveMotdNum() const;
 	const std::string& getMotdHash() const { return motdHash; }
