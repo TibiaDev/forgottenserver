@@ -193,6 +193,8 @@ private:
 
 	void sendFightModes();
 
+	void sendAnimatedText(const std::string& message, const Position& pos, TextColor_t color);
+
 	void sendWorldLight(LightInfo lightInfo);
 	void sendCreatureLight(const Creature* creature);
 

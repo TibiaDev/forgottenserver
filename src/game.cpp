@@ -3945,6 +3945,10 @@ bool Game::combatChangeHealth(Creature* attacker, Creature* target, CombatDamage
 			message.primary.value = realHealthChange;
 			message.primary.color = TEXTCOLOR_PASTELRED;
 
+			std::ostringstream strHealthChange;
+			strHealthChange << realHealthChange;
+			addAnimatedText(strHealthChange.str(), targetPos, TEXTCOLOR_MAYABLUE);
+
 			SpectatorVec spectators;
 			map.getSpectators(spectators, targetPos, false, true);
 			for (Creature* spectator : spectators) {
@@ -4059,6 +4063,10 @@ bool Game::combatChangeHealth(Creature* attacker, Creature* target, CombatDamage
 
 				std::string spectatorMessage;
 
+				std::ostringstream strManaDamage;
+				strManaDamage << manaDamage;
+				addAnimatedText(strManaDamage.str(), targetPos, TEXTCOLOR_BLUE);
+
 				message.primary.value = manaDamage;
 				message.primary.color = TEXTCOLOR_BLUE;
 
@@ -4157,12 +4165,24 @@ bool Game::combatChangeHealth(Creature* attacker, Creature* target, CombatDamage
 			if (hitEffect != CONST_ME_NONE) {
 				addMagicEffect(spectators, targetPos, hitEffect);
 			}
+
+			if (message.primary.color != TEXTCOLOR_NONE) {
+				std::ostringstream strPrimaryDamage;
+				strPrimaryDamage << message.primary.value;
+				addAnimatedText(strPrimaryDamage.str(), targetPos, message.primary.color);
+			}
 		}
 
 		if (message.secondary.value) {
 			combatGetTypeInfo(damage.secondary.type, target, message.secondary.color, hitEffect);
 			if (hitEffect != CONST_ME_NONE) {
 				addMagicEffect(spectators, targetPos, hitEffect);
+			}
+
+			if (message.secondary.color != TEXTCOLOR_NONE) {
+				std::ostringstream strSecondaryDamage;
+				strSecondaryDamage << message.secondary.value;
+				addAnimatedText(strSecondaryDamage.str(), targetPos, message.secondary.color);
 			}
 		}
 
@@ -4323,6 +4343,10 @@ bool Game::combatChangeMana(Creature* attacker, Creature* target, CombatDamage& 
 		message.primary.value = manaLoss;
 		message.primary.color = TEXTCOLOR_BLUE;
 
+		std::ostringstream strManaLoss;
+		strManaLoss << manaLoss;
+		addAnimatedText(strManaLoss.str(), targetPos, TEXTCOLOR_BLUE);
+
 		SpectatorVec spectators;
 		map.getSpectators(spectators, targetPos, false, true);
 		for (Creature* spectator : spectators) {
@@ -4381,6 +4405,31 @@ void Game::addCreatureHealth(const SpectatorVec& spectators, const Creature* tar
 	for (Creature* spectator : spectators) {
 		if (Player* tmpPlayer = spectator->getPlayer()) {
 			tmpPlayer->sendCreatureHealth(target);
+		}
+	}
+}
+
+void Game::addAnimatedText(const std::string& message, const Position& pos, TextColor_t color)
+{
+	SpectatorVec spectators;
+	map.getSpectators(spectators, pos, true, true);
+	if (spectators.empty()) {
+		return;
+	}
+
+	addAnimatedText(spectators, message, pos, color);
+}
+
+void Game::addAnimatedText(const SpectatorVec& spectators, const std::string& message, const Position& pos,
+                           TextColor_t color)
+{
+	if (spectators.empty()) {
+		return;
+	}
+
+	for (Creature* spectator : spectators) {
+		if (Player* tmpPlayer = spectator->getPlayer()) {
+			tmpPlayer->sendAnimatedText(message, pos, color);
 		}
 	}
 }

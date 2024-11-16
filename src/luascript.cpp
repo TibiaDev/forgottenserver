@@ -2307,6 +2307,8 @@ void LuaScriptInterface::registerFunctions()
 
 	registerMethod(L, "Game", "startEvent", LuaScriptInterface::luaGameStartEvent);
 
+	registerMethod(L, "Game", "sendAnimatedText", LuaScriptInterface::luaGameSendAnimatedText);
+
 	registerMethod(L, "Game", "getClientVersion", LuaScriptInterface::luaGameGetClientVersion);
 
 	registerMethod(L, "Game", "reload", LuaScriptInterface::luaGameReload);
@@ -4897,6 +4899,29 @@ int LuaScriptInterface::luaGameStartEvent(lua_State* L)
 	} else {
 		lua_pushnil(L);
 	}
+	return 1;
+}
+
+int LuaScriptInterface::luaGameSendAnimatedText(lua_State* L)
+{
+	// Game.sendAnimatedText(message, position, color)
+	int parameters = lua_gettop(L);
+	if (parameters < 3) {
+		tfs::lua::pushBoolean(L, false);
+		return 1;
+	}
+
+	TextColor_t color = tfs::lua::getNumber<TextColor_t>(L, 3);
+	const Position& position = tfs::lua::getPosition(L, 2);
+	const std::string& message = tfs::lua::getString(L, 1);
+
+	if (!position.x || !position.y) {
+		tfs::lua::pushBoolean(L, false);
+		return 1;
+	}
+
+	g_game.addAnimatedText(message, position, color);
+	tfs::lua::pushBoolean(L, true);
 	return 1;
 }
 

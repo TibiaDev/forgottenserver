@@ -303,6 +303,8 @@ private:
 
 	static int luaGameStartEvent(lua_State* L);
 
+	static int luaGameSendAnimatedText(lua_State* L);
+
 	static int luaGameGetClientVersion(lua_State* L);
 
 	static int luaGameReload(lua_State* L);

@@ -2426,6 +2426,20 @@ void ProtocolGame::AddCreatureLight(NetworkMessage& msg, const Creature* creatur
 	msg.addByte(lightInfo.color);
 }
 
+void ProtocolGame::sendAnimatedText(const std::string& message, const Position& pos, TextColor_t color)
+{
+	if (!canSee(pos)) {
+		return;
+	}
+
+	NetworkMessage msg;
+	msg.addByte(0x84);
+	msg.addPosition(pos);
+	msg.addByte(color);
+	msg.addString(message);
+	writeToOutputBuffer(msg);
+}
+
 // tile
 void ProtocolGame::RemoveTileThing(NetworkMessage& msg, const Position& pos, uint32_t stackpos)
 {

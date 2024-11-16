@@ -1164,6 +1164,8 @@ void Creature::onGainExperience(uint64_t gainExp, Creature* target)
 		assert(dynamic_cast<Player*>(spectator) != nullptr);
 		static_cast<Player*>(spectator)->sendTextMessage(message);
 	}
+
+	g_game.addAnimatedText(spectators, std::to_string(gainExp), position, TEXTCOLOR_WHITE_EXP);
 }
 
 bool Creature::setMaster(Creature* newMaster)

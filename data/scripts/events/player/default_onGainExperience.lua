@@ -82,6 +82,8 @@ function message.onGainExperience(player, source, exp, rawExp, sendText)
 		local expString = exp .. (exp ~= 1 and " experience points." or " experience point.")
 		player:sendTextMessage(MESSAGE_STATUS_DEFAULT, "You gained " .. expString, pos, exp, TEXTCOLOR_WHITE_EXP)
 
+		Game.sendAnimatedText(tostring(math.floor(exp)), pos, TEXTCOLOR_WHITE_EXP);
+
 		local spectators = Game.getSpectators(pos, false, true)
 		for _, spectator in ipairs(spectators) do
 			if spectator ~= player then
