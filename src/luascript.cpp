@@ -55,6 +55,33 @@ LuaEnvironment g_luaEnvironment;
 
 namespace {
 
+#ifndef LUAJIT_VERSION
+#if LUA_VERSION_NUM < 502
+extern "C" {
+void luaL_traceback(lua_State* L, lua_State* L1, const char* msg, int level)
+{
+	if (msg) {
+		lua_pushfstring(L, "%s\n", msg);
+	}
+	lua_getfield(L1, LUA_GLOBALSINDEX, "debug");
+	if (!lua_istable(L1, -1)) {
+		lua_pop(L1, 1);
+		return;
+	}
+	lua_getfield(L1, -1, "traceback");
+	if (!lua_isfunction(L1, -1)) {
+		lua_pop(L1, 2);
+		return;
+	}
+	lua_pushvalue(L1, L);
+	lua_pushinteger(L1, level);
+	lua_call(L1, 2, 1);
+	lua_remove(L1, -2); // remove 'debug'
+}
+}
+#endif
+#endif
+
 constexpr int32_t EVENT_ID_LOADING = 1;
 
 enum LuaDataType
@@ -2161,6 +2188,7 @@ void LuaScriptInterface::registerFunctions()
 	registerEnumIn(L, "configKeys", ConfigManager::URL);
 	registerEnumIn(L, "configKeys", ConfigManager::LOCATION);
 	registerEnumIn(L, "configKeys", ConfigManager::IP);
+	registerEnumIn(L, "configKeys", ConfigManager::MOTD);
 	registerEnumIn(L, "configKeys", ConfigManager::WORLD_TYPE);
 	registerEnumIn(L, "configKeys", ConfigManager::MYSQL_HOST);
 	registerEnumIn(L, "configKeys", ConfigManager::MYSQL_USER);
@@ -2273,6 +2301,8 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod(L, "Game", "createNpcType", LuaScriptInterface::luaGameCreateNpcType);
 
 	registerMethod(L, "Game", "startEvent", LuaScriptInterface::luaGameStartEvent);
+
+	registerMethod(L, "Game", "sendAnimatedText", LuaScriptInterface::luaGameSendAnimatedText);
 
 	registerMethod(L, "Game", "getClientVersion", LuaScriptInterface::luaGameGetClientVersion);
 
@@ -4867,6 +4897,29 @@ int LuaScriptInterface::luaGameStartEvent(lua_State* L)
 	} else {
 		lua_pushnil(L);
 	}
+	return 1;
+}
+
+int LuaScriptInterface::luaGameSendAnimatedText(lua_State* L)
+{
+	// Game.sendAnimatedText(message, position, color)
+	int parameters = lua_gettop(L);
+	if (parameters < 3) {
+		tfs::lua::pushBoolean(L, false);
+		return 1;
+	}
+
+	TextColor_t color = tfs::lua::getNumber<TextColor_t>(L, 3);
+	const Position& position = tfs::lua::getPosition(L, 2);
+	const std::string& message = tfs::lua::getString(L, 1);
+
+	if (!position.x || !position.y) {
+		tfs::lua::pushBoolean(L, false);
+		return 1;
+	}
+
+	g_game.addAnimatedText(message, position, color);
+	tfs::lua::pushBoolean(L, true);
 	return 1;
 }
 
@@ -8774,8 +8827,8 @@ int LuaScriptInterface::luaPlayerAddOfflineTrainingTries(lua_State* L)
 	// player:addOfflineTrainingTries(skillType, tries)
 	Player* player = tfs::lua::getUserdata<Player>(L, 1);
 	if (player) {
-		skills_t skillType = tfs::lua::getNumber<skills_t>(L, 2);
-		uint64_t tries = tfs::lua::getNumber<uint64_t>(L, 3);
+		tfs::lua::getNumber<skills_t>(L, 2);
+		tfs::lua::getNumber<uint64_t>(L, 3);
 	} else {
 		lua_pushnil(L);
 	}

@@ -894,6 +894,8 @@ bool ConditionRegeneration::executeCondition(Creature* creature, int32_t interva
 				message.primary.color = TEXTCOLOR_MAYABLUE;
 				player->sendTextMessage(message);
 
+				g_game.addAnimatedText(std::to_string(realHealthGain), player->getPosition(), TEXTCOLOR_MAYABLUE);
+
 				SpectatorVec spectators;
 				g_game.map.getSpectators(spectators, player->getPosition(), false, true);
 				spectators.erase(player);
@@ -925,6 +927,8 @@ bool ConditionRegeneration::executeCondition(Creature* creature, int32_t interva
 				message.primary.value = realManaGain;
 				message.primary.color = TEXTCOLOR_MAYABLUE;
 				player->sendTextMessage(message);
+
+				g_game.addAnimatedText(std::to_string(realManaGain), player->getPosition(), TEXTCOLOR_BLUE);
 
 				SpectatorVec spectators;
 				g_game.map.getSpectators(spectators, player->getPosition(), false, true);

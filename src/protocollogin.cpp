@@ -58,13 +58,12 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 
 	auto output = OutputMessagePool::getOutputMessage();
 
-	// todo: add motd into config.lua and load in ConfigManager
-	// const std::string& motd = getString(ConfigManager::MOTD);
-	// if (!motd.empty()) {
-	//	// Add MOTD
-	//	output->addByte(0x14);
-	//	output->addString(fmt::format("{:d}\n{:s}", g_game.getMotdNum(), motd));
-	// }
+	 const std::string& motd = getString(ConfigManager::MOTD);
+	 if (!motd.empty()) {
+		// Add MOTD
+		output->addByte(0x14);
+		output->addString(fmt::format("{:d}\n{:s}", g_game.getMotdNum(), motd));
+	 }
 
 	// Add char list
 	output->addByte(0x64);

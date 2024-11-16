@@ -81,6 +81,7 @@ void Game::setGameState(GameState_t newState)
 			map.spawns.startup();
 
 			loadPlayersRecord();
+			loadMotdNum();
 
 			g_globalEvents->startup();
 			break;
@@ -97,6 +98,7 @@ void Game::setGameState(GameState_t newState)
 				it = players.begin();
 			}
 
+			saveMotdNum();
 			saveGameState();
 
 			g_dispatcher.addTask([this]() { shutdown(); });
@@ -1939,25 +1941,17 @@ void Game::playerRequestChannels(uint32_t playerId)
 
 void Game::playerOpenChannel(uint32_t playerId, uint16_t channelId)
 {
-	Player* player = getPlayerByID(playerId);
-	if (!player) {
-		return;
-	}
+    Player* player = getPlayerByID(playerId);
+    if (!player) {
+        return;
+    }
 
-	ChatChannel* channel = g_chat->addUserToChannel(*player, channelId);
-	if (!channel) {
-		return;
-	}
+    ChatChannel* channel = g_chat->addUserToChannel(*player, channelId);
+    if (!channel) {
+        return;
+    }
 
-	const InvitedMap* invitedUsers = channel->getInvitedUsers();
-	const UsersMap* users;
-	if (!channel->isPublicChannel()) {
-		users = &channel->getUsers();
-	} else {
-		users = nullptr;
-	}
-
-	player->sendChannel(channel->getId(), channel->getName());
+    player->sendChannel(channel->getId(), channel->getName());
 }
 
 void Game::playerCloseChannel(uint32_t playerId, uint16_t channelId)
@@ -3951,6 +3945,10 @@ bool Game::combatChangeHealth(Creature* attacker, Creature* target, CombatDamage
 			message.primary.value = realHealthChange;
 			message.primary.color = TEXTCOLOR_PASTELRED;
 
+			std::ostringstream strHealthChange;
+			strHealthChange << realHealthChange;
+			addAnimatedText(strHealthChange.str(), targetPos, TEXTCOLOR_MAYABLUE);
+
 			SpectatorVec spectators;
 			map.getSpectators(spectators, targetPos, false, true);
 			for (Creature* spectator : spectators) {
@@ -4065,6 +4063,10 @@ bool Game::combatChangeHealth(Creature* attacker, Creature* target, CombatDamage
 
 				std::string spectatorMessage;
 
+				std::ostringstream strManaDamage;
+				strManaDamage << manaDamage;
+				addAnimatedText(strManaDamage.str(), targetPos, TEXTCOLOR_BLUE);
+
 				message.primary.value = manaDamage;
 				message.primary.color = TEXTCOLOR_BLUE;
 
@@ -4163,12 +4165,24 @@ bool Game::combatChangeHealth(Creature* attacker, Creature* target, CombatDamage
 			if (hitEffect != CONST_ME_NONE) {
 				addMagicEffect(spectators, targetPos, hitEffect);
 			}
+
+			if (message.primary.color != TEXTCOLOR_NONE) {
+				std::ostringstream strPrimaryDamage;
+				strPrimaryDamage << message.primary.value;
+				addAnimatedText(strPrimaryDamage.str(), targetPos, message.primary.color);
+			}
 		}
 
 		if (message.secondary.value) {
 			combatGetTypeInfo(damage.secondary.type, target, message.secondary.color, hitEffect);
 			if (hitEffect != CONST_ME_NONE) {
 				addMagicEffect(spectators, targetPos, hitEffect);
+			}
+
+			if (message.secondary.color != TEXTCOLOR_NONE) {
+				std::ostringstream strSecondaryDamage;
+				strSecondaryDamage << message.secondary.value;
+				addAnimatedText(strSecondaryDamage.str(), targetPos, message.secondary.color);
 			}
 		}
 
@@ -4329,6 +4343,10 @@ bool Game::combatChangeMana(Creature* attacker, Creature* target, CombatDamage& 
 		message.primary.value = manaLoss;
 		message.primary.color = TEXTCOLOR_BLUE;
 
+		std::ostringstream strManaLoss;
+		strManaLoss << manaLoss;
+		addAnimatedText(strManaLoss.str(), targetPos, TEXTCOLOR_BLUE);
+
 		SpectatorVec spectators;
 		map.getSpectators(spectators, targetPos, false, true);
 		for (Creature* spectator : spectators) {
@@ -4387,6 +4405,31 @@ void Game::addCreatureHealth(const SpectatorVec& spectators, const Creature* tar
 	for (Creature* spectator : spectators) {
 		if (Player* tmpPlayer = spectator->getPlayer()) {
 			tmpPlayer->sendCreatureHealth(target);
+		}
+	}
+}
+
+void Game::addAnimatedText(const std::string& message, const Position& pos, TextColor_t color)
+{
+	SpectatorVec spectators;
+	map.getSpectators(spectators, pos, true, true);
+	if (spectators.empty()) {
+		return;
+	}
+
+	addAnimatedText(spectators, message, pos, color);
+}
+
+void Game::addAnimatedText(const SpectatorVec& spectators, const std::string& message, const Position& pos,
+                           TextColor_t color)
+{
+	if (spectators.empty()) {
+		return;
+	}
+
+	for (Creature* spectator : spectators) {
+		if (Player* tmpPlayer = spectator->getPlayer()) {
+			tmpPlayer->sendAnimatedText(message, pos, color);
 		}
 	}
 }
@@ -4606,6 +4649,37 @@ void Game::updatePlayerShield(Player* player)
 		assert(dynamic_cast<Player*>(spectator) != nullptr);
 		static_cast<Player*>(spectator)->sendCreatureShield(player);
 	}
+}
+
+void Game::loadMotdNum()
+{
+	Database& db = Database::getInstance();
+
+	DBResult_ptr result = db.storeQuery("SELECT `value` FROM `server_config` WHERE `config` = 'motd_num'");
+	if (result) {
+		motdNum = result->getNumber<uint32_t>("value");
+	} else {
+		db.executeQuery("INSERT INTO `server_config` (`config`, `value`) VALUES ('motd_num', '0')");
+	}
+
+	result = db.storeQuery("SELECT `value` FROM `server_config` WHERE `config` = 'motd_hash'");
+	if (result) {
+		motdHash = result->getString("value");
+		if (motdHash != transformToSHA1(ConfigManager::getString(ConfigManager::MOTD))) {
+			++motdNum;
+		}
+	} else {
+		db.executeQuery("INSERT INTO `server_config` (`config`, `value`) VALUES ('motd_hash', '')");
+	}
+}
+
+void Game::saveMotdNum() const
+{
+	Database& db = Database::getInstance();
+	db.executeQuery(fmt::format("UPDATE `server_config` SET `value` = '{:d}' WHERE `config` = 'motd_num'", motdNum));
+	db.executeQuery(
+	    fmt::format("UPDATE `server_config` SET `value` = '{:s}' WHERE `config` = 'motd_hash'",
+	                            transformToHEX(transformToSHA1(ConfigManager::getString(ConfigManager::MOTD)))));
 }
 
 void Game::checkPlayersRecord()

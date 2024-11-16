@@ -90,6 +90,16 @@ std::string transformToSHA1(std::string_view input)
 	return digest;
 }
 
+std::string transformToHEX(std::string value)
+{
+	std::ostringstream hexStream;
+	for (unsigned char c : value) {
+		hexStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(c);
+	}
+
+	return hexStream.str();
+}
+
 std::string hmac(std::string_view algorithm, std::string_view key, std::string_view message)
 {
 	std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> ctx{EVP_MD_CTX_new(), EVP_MD_CTX_free};

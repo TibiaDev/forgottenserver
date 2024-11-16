@@ -655,6 +655,12 @@ public:
 			client->sendCreatureShield(creature);
 		}
 	}
+	void sendAnimatedText(const std::string& message, const Position& pos, TextColor_t color)
+	{
+		if (client) {
+			client->sendAnimatedText(message, pos, color);
+		}
+	}
 	
 	// container
 	void sendAddContainerItem(const Container* container, const Item* item);

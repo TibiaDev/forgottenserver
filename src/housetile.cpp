@@ -58,25 +58,24 @@ void HouseTile::updateHouse(Item* item)
 	}
 }
 
-ReturnValue HouseTile::queryAdd(int32_t index, const Thing& thing, uint32_t count, uint32_t flags,
-                                Creature* actor /* = nullptr*/) const
+ReturnValue HouseTile::queryAdd(int32_t index, const Thing& thing, uint32_t count, uint32_t flags, Creature* actor /* = nullptr*/) const
 {
-	if (const Creature* creature = thing.getCreature()) {
-		if (const Player* player = creature->getPlayer()) {
-			if (!house->isInvited(player)) {
-				return RETURNVALUE_PLAYERISNOTINVITED;
-			}
-		} else {
-			return RETURNVALUE_NOTPOSSIBLE;
-		}
-	} else if (const Item* item = thing.getItem()) {
-		if (actor && getBoolean(ConfigManager::ONLY_INVITED_CAN_MOVE_HOUSE_ITEMS)) {
-			if (!house->isInvited(actor->getPlayer())) {
-				return RETURNVALUE_PLAYERISNOTINVITED;
-			}
-		}
-	}
-	return Tile::queryAdd(index, thing, count, flags, actor);
+    if (const Creature* creature = thing.getCreature()) {
+        if (const Player* player = creature->getPlayer()) {
+            if (!house->isInvited(player)) {
+                return RETURNVALUE_PLAYERISNOTINVITED;
+            }
+        } else {
+            return RETURNVALUE_NOTPOSSIBLE;
+        }
+    } else if (thing.getItem()) {
+        if (actor && getBoolean(ConfigManager::ONLY_INVITED_CAN_MOVE_HOUSE_ITEMS)) {
+            if (!house->isInvited(actor->getPlayer())) {
+                return RETURNVALUE_PLAYERISNOTINVITED;
+            }
+        }
+    }
+    return Tile::queryAdd(index, thing, count, flags, actor);
 }
 
 Tile* HouseTile::queryDestination(int32_t& index, const Thing& thing, Item** destItem, uint32_t& flags)

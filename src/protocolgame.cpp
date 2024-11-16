@@ -1060,7 +1060,7 @@ void ProtocolGame::parseLookInBattleList(NetworkMessage& msg)
 
 void ProtocolGame::parseSay(NetworkMessage& msg)
 {
-	std::string_view receiver;
+	std::string receiver;
 	uint16_t channelId;
 
 	SpeakClasses type = static_cast<SpeakClasses>(msg.getByte());
@@ -1158,7 +1158,7 @@ void ProtocolGame::parsePlayerPurchase(NetworkMessage& msg)
 {
 	uint16_t id = msg.get<uint16_t>();
 	uint8_t count = msg.getByte();
-	uint16_t amount = msg.get<uint16_t>();
+	uint8_t amount = msg.get<uint8_t>();
 	bool ignoreCap = msg.getByte() != 0;
 	bool inBackpacks = msg.getByte() != 0;
 	g_dispatcher.addTask(DISPATCHER_TASK_EXPIRATION, [=, playerID = player->getID()]() {
@@ -1170,7 +1170,7 @@ void ProtocolGame::parsePlayerSale(NetworkMessage& msg)
 {
 	uint16_t id = msg.get<uint16_t>();
 	uint8_t count = msg.getByte();
-	uint16_t amount = msg.get<uint16_t>();
+	uint8_t amount = msg.get<uint8_t>();
 	bool ignoreEquipped = msg.getByte() != 0;
 	g_dispatcher.addTask(DISPATCHER_TASK_EXPIRATION, [=, playerID = player->getID()]() {
 		g_game.playerSellItem(playerID, id, count, amount, ignoreEquipped);
@@ -2413,6 +2413,20 @@ void ProtocolGame::AddCreatureLight(NetworkMessage& msg, const Creature* creatur
 	msg.add<uint32_t>(creature->getID());
 	msg.addByte((player->isAccessPlayer() ? 0xFF : lightInfo.level));
 	msg.addByte(lightInfo.color);
+}
+
+void ProtocolGame::sendAnimatedText(const std::string& message, const Position& pos, TextColor_t color)
+{
+	if (!canSee(pos)) {
+		return;
+	}
+
+	NetworkMessage msg;
+	msg.addByte(0x84);
+	msg.addPosition(pos);
+	msg.addByte(color);
+	msg.addString(message);
+	writeToOutputBuffer(msg);
 }
 
 // tile

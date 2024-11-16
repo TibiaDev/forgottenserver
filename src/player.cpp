@@ -1463,11 +1463,6 @@ void Player::onThink(uint32_t interval)
 	if (g_game.getWorldType() != WORLD_TYPE_PVP_ENFORCED) {
 		checkSkullTicks(interval / 1000);
 	}
-
-	addOfflineTrainingTime(interval);
-	if (lastStatsTrainingTime != getOfflineTrainingTime() / 60 / 1000) {
-		sendStats();
-	}
 }
 
 uint32_t Player::isMuted() const
