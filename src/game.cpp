@@ -54,6 +54,12 @@ void Game::start(ServiceManager* manager)
 {
 	serviceManager = manager;
 
+	updateWorldTime();
+
+	if (ConfigManager::getBoolean(ConfigManager::DEFAULT_WORLD_LIGHT)) {
+		g_scheduler.addEvent(createSchedulerTask(EVENT_LIGHTINTERVAL, std::bind(&Game::checkLight, this)));
+	}
+
 	g_scheduler.addEvent(createSchedulerTask(EVENT_CREATURE_THINK_INTERVAL, [this]() { checkCreatures(0); }));
 	g_scheduler.addEvent(createSchedulerTask(EVENT_DECAYINTERVAL, [this]() { checkDecay(); }));
 }
@@ -81,6 +87,7 @@ void Game::setGameState(GameState_t newState)
 			map.spawns.startup();
 
 			loadPlayersRecord();
+			loadMotdNum();
 
 			g_globalEvents->startup();
 			break;
@@ -97,6 +104,7 @@ void Game::setGameState(GameState_t newState)
 				it = players.begin();
 			}
 
+			saveMotdNum();
 			saveGameState();
 
 			g_dispatcher.addTask([this]() { shutdown(); });
@@ -4496,6 +4504,44 @@ void Game::checkDecay()
 	cleanup();
 }
 
+
+void Game::checkLight()
+{
+	g_scheduler.addEvent(createSchedulerTask(EVENT_LIGHTINTERVAL, std::bind(&Game::checkLight, this)));
+	uint8_t previousLightLevel = lightLevel;
+	updateWorldLightLevel();
+
+	if (previousLightLevel != lightLevel) {
+		LightInfo lightInfo = getWorldLightInfo();
+
+		for (const auto& it : players) {
+			it.second->sendWorldLight(lightInfo);
+		}
+	}
+}
+
+void Game::updateWorldLightLevel()
+{
+	if (getWorldTime() >= GAME_SUNRISE && getWorldTime() <= GAME_DAYTIME) {
+		lightLevel = ((GAME_DAYTIME - GAME_SUNRISE) - (GAME_DAYTIME - getWorldTime())) * float(LIGHT_CHANGE_SUNRISE) +
+		             LIGHT_NIGHT;
+	} else if (getWorldTime() >= GAME_SUNSET && getWorldTime() <= GAME_NIGHTTIME) {
+		lightLevel = LIGHT_DAY - ((getWorldTime() - GAME_SUNSET) * float(LIGHT_CHANGE_SUNSET));
+	} else if (getWorldTime() >= GAME_NIGHTTIME || getWorldTime() < GAME_SUNRISE) {
+		lightLevel = LIGHT_NIGHT;
+	} else {
+		lightLevel = LIGHT_DAY;
+	}
+}
+
+void Game::updateWorldTime()
+{
+	g_scheduler.addEvent(createSchedulerTask(EVENT_WORLDTIMEINTERVAL, std::bind(&Game::updateWorldTime, this)));
+	time_t osTime = time(nullptr);
+	tm* timeInfo = localtime(&osTime);
+	worldTime = (timeInfo->tm_sec + (timeInfo->tm_min * 60)) / 2.5f;
+}
+
 void Game::shutdown()
 {
 	std::cout << "Shutting down..." << std::flush;
@@ -4598,6 +4644,36 @@ void Game::updatePlayerShield(Player* player)
 		assert(dynamic_cast<Player*>(spectator) != nullptr);
 		static_cast<Player*>(spectator)->sendCreatureShield(player);
 	}
+}
+
+void Game::loadMotdNum()
+{
+	Database& db = Database::getInstance();
+
+	DBResult_ptr result = db.storeQuery("SELECT `value` FROM `server_config` WHERE `config` = 'motd_num'");
+	if (result) {
+		motdNum = result->getNumber<uint32_t>("value");
+	} else {
+		db.executeQuery("INSERT INTO `server_config` (`config`, `value`) VALUES ('motd_num', '0')");
+	}
+
+	result = db.storeQuery("SELECT `value` FROM `server_config` WHERE `config` = 'motd_hash'");
+	if (result) {
+		motdHash = result->getString("value");
+		if (motdHash != transformToSHA1(ConfigManager::getString(ConfigManager::MOTD))) {
+			++motdNum;
+		}
+	} else {
+		db.executeQuery("INSERT INTO `server_config` (`config`, `value`) VALUES ('motd_hash', '')");
+	}
+}
+
+void Game::saveMotdNum() const
+{
+	Database& db = Database::getInstance();
+	db.executeQuery(fmt::format("UPDATE `server_config` SET `value` = '{:d}' WHERE `config` = 'motd_num'", motdNum));
+	db.executeQuery(fmt::format("UPDATE `server_config` SET `value` = '{:s}' WHERE `config` = 'motd_hash'",
+	                            transformToSHA1(ConfigManager::getString(ConfigManager::MOTD))));
 }
 
 void Game::checkPlayersRecord()

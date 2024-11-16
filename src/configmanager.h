@@ -60,6 +60,7 @@ enum string_config_t
 	OWNER_EMAIL,
 	URL,
 	LOCATION,
+	MOTD,
 	IP,
 	WORLD_TYPE,
 	MYSQL_HOST,
@@ -123,6 +124,7 @@ enum integer_config_t
 };
 
 bool load();
+bool reload();
 
 const std::string& getString(string_config_t what);
 int32_t getNumber(integer_config_t what);
