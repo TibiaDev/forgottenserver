@@ -82,8 +82,6 @@ protected:
 	Creature();
 
 public:
-	static double speedA, speedB, speedC;
-
 	virtual ~Creature();
 
 	// non-copyable

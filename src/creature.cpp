@@ -14,10 +14,6 @@
 #include "scheduler.h"
 #include "spectators.h"
 
-double Creature::speedA = 857.36;
-double Creature::speedB = 261.29;
-double Creature::speedC = -4795.01;
-
 extern Game g_game;
 extern CreatureEvents* g_creatureEvents;
 extern Events* g_events;
@@ -1422,20 +1418,8 @@ int64_t Creature::getStepDuration() const
 		return 0;
 	}
 
-	uint32_t calculatedStepSpeed;
 	uint32_t groundSpeed;
-
 	int32_t stepSpeed = getStepSpeed();
-	if (stepSpeed > -Creature::speedB) {
-		calculatedStepSpeed =
-		    floor((Creature::speedA * log((stepSpeed / 2) + Creature::speedB) + Creature::speedC) + 0.5);
-		if (calculatedStepSpeed == 0) {
-			calculatedStepSpeed = 1;
-		}
-	} else {
-		calculatedStepSpeed = 1;
-	}
-
 	Item* ground = tile->getGround();
 	if (ground) {
 		groundSpeed = Item::items[ground->getID()].speed;
@@ -1446,12 +1430,12 @@ int64_t Creature::getStepDuration() const
 		groundSpeed = 150;
 	}
 
-	double duration = std::floor(1000 * groundSpeed / calculatedStepSpeed);
+	double duration = std::floor(1000 * groundSpeed) / stepSpeed;
 	int64_t stepDuration = std::ceil(duration / 50) * 50;
 
 	const Monster* monster = getMonster();
 	if (monster && monster->isTargetNearby() && !monster->isFleeing() && !monster->getMaster()) {
-		stepDuration *= 2;
+		stepDuration *= 3;
 	}
 
 	return stepDuration;
