@@ -1182,6 +1182,17 @@ static void pushLoot(lua_State* L, const std::vector<LootBlock>& lootList)
 	}
 }
 
+static void pushTown(lua_State* L, const Town& town)
+{
+	lua_createtable(L, 0, 3);
+	setField(L, "id", town.id);
+	setField(L, "name", town.name);
+	tfs::lua::pushPosition(L, town.templePosition);
+	lua_setfield(L, -2, "templePosition");
+	lua_getglobal(L, "Town");
+	lua_setmetatable(L, -2);
+}
+
 #define registerEnum(L, value) \
 	{ \
 		std::string enumName = #value; \
@@ -2677,6 +2688,7 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod(L, "Player", "sendPrivateMessage", LuaScriptInterface::luaPlayerSendPrivateMessage);
 	registerMethod(L, "Player", "channelSay", LuaScriptInterface::luaPlayerChannelSay);
 	registerMethod(L, "Player", "openChannel", LuaScriptInterface::luaPlayerOpenChannel);
+	registerMethod(L, "Player", "leaveChannel", LuaScriptInterface::luaPlayerLeaveChannel);
 
 	registerMethod(L, "Player", "getSlotItem", LuaScriptInterface::luaPlayerGetSlotItem);
 
@@ -2888,14 +2900,6 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod(L, "Vocation", "getPromotion", LuaScriptInterface::luaVocationGetPromotion);
 
 	registerMethod(L, "Vocation", "allowsPvp", LuaScriptInterface::luaVocationAllowsPvp);
-
-	// Town
-	registerClass(L, "Town", "", LuaScriptInterface::luaTownCreate);
-	registerMetaMethod(L, "Town", "__eq", LuaScriptInterface::luaUserdataCompare);
-
-	registerMethod(L, "Town", "getId", LuaScriptInterface::luaTownGetId);
-	registerMethod(L, "Town", "getName", LuaScriptInterface::luaTownGetName);
-	registerMethod(L, "Town", "getTemplePosition", LuaScriptInterface::luaTownGetTemplePosition);
 
 	// House
 	registerClass(L, "House", "", LuaScriptInterface::luaHouseCreate);
@@ -4582,9 +4586,8 @@ int LuaScriptInterface::luaGameGetTowns(lua_State* L)
 	lua_createtable(L, towns.size(), 0);
 
 	int index = 0;
-	for (auto townEntry : towns) {
-		tfs::lua::pushUserdata(L, townEntry.second);
-		tfs::lua::setMetatable(L, -1, "Town");
+	for (const auto& [_, town] : towns) {
+		pushTown(L, *town);
 		lua_rawseti(L, -2, ++index);
 	}
 	return 1;
@@ -9021,8 +9024,7 @@ int LuaScriptInterface::luaPlayerGetTown(lua_State* L)
 	// player:getTown()
 	Player* player = tfs::lua::getUserdata<Player>(L, 1);
 	if (player) {
-		tfs::lua::pushUserdata(L, player->getTown());
-		tfs::lua::setMetatable(L, -1, "Town");
+		pushTown(L, *player->getTown());
 	} else {
 		lua_pushnil(L);
 	}
@@ -9032,7 +9034,12 @@ int LuaScriptInterface::luaPlayerGetTown(lua_State* L)
 int LuaScriptInterface::luaPlayerSetTown(lua_State* L)
 {
 	// player:setTown(town)
-	Town* town = tfs::lua::getUserdata<Town>(L, 2);
+	if (!lua_istable(L, 2)) {
+		tfs::lua::pushBoolean(L, false);
+		return 1;
+	}
+
+	const Town* town = g_game.map.towns.getTown(tfs::lua::getField<uint32_t>(L, 2, "id", -1));
 	if (!town) {
 		tfs::lua::pushBoolean(L, false);
 		return 1;
@@ -9646,6 +9653,20 @@ int LuaScriptInterface::luaPlayerOpenChannel(lua_State* L)
 	Player* player = tfs::lua::getUserdata<Player>(L, 1);
 	if (player) {
 		g_game.playerOpenChannel(player->getID(), channelId);
+		tfs::lua::pushBoolean(L, true);
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerLeaveChannel(lua_State* L)
+{
+	// player:leaveChannel(channelId)
+	uint16_t channelId = tfs::lua::getNumber<uint16_t>(L, 2);
+	Player* player = tfs::lua::getUserdata<Player>(L, 1);
+	if (player) {
+		g_game.playerCloseChannel(player->getID(), channelId);
 		tfs::lua::pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -11814,64 +11835,6 @@ int LuaScriptInterface::luaVocationAllowsPvp(lua_State* L)
 	return 1;
 }
 
-// Town
-int LuaScriptInterface::luaTownCreate(lua_State* L)
-{
-	// Town(id or name)
-	Town* town;
-	if (isNumber(L, 2)) {
-		town = g_game.map.towns.getTown(tfs::lua::getNumber<uint32_t>(L, 2));
-	} else if (lua_isstring(L, 2)) {
-		town = g_game.map.towns.getTown(tfs::lua::getString(L, 2));
-	} else {
-		town = nullptr;
-	}
-
-	if (town) {
-		tfs::lua::pushUserdata(L, town);
-		tfs::lua::setMetatable(L, -1, "Town");
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaTownGetId(lua_State* L)
-{
-	// town:getId()
-	Town* town = tfs::lua::getUserdata<Town>(L, 1);
-	if (town) {
-		lua_pushnumber(L, town->getID());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaTownGetName(lua_State* L)
-{
-	// town:getName()
-	Town* town = tfs::lua::getUserdata<Town>(L, 1);
-	if (town) {
-		tfs::lua::pushString(L, town->getName());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaTownGetTemplePosition(lua_State* L)
-{
-	// town:getTemplePosition()
-	Town* town = tfs::lua::getUserdata<Town>(L, 1);
-	if (town) {
-		tfs::lua::pushPosition(L, town->getTemplePosition());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
 // House
 int LuaScriptInterface::luaHouseCreate(lua_State* L)
 {
@@ -11919,10 +11882,9 @@ int LuaScriptInterface::luaHouseGetTown(lua_State* L)
 		return 1;
 	}
 
-	Town* town = g_game.map.towns.getTown(house->getTownId());
+	const Town* town = g_game.map.towns.getTown(house->getTownId());
 	if (town) {
-		tfs::lua::pushUserdata(L, town);
-		tfs::lua::setMetatable(L, -1, "Town");
+		pushTown(L, *town);
 	} else {
 		lua_pushnil(L);
 	}

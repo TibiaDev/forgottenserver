@@ -274,9 +274,9 @@ public:
 	time_t getLastLogout() const { return lastLogout; }
 
 	const Position& getLoginPosition() const { return loginPosition; }
-	const Position& getTemplePosition() const { return town->getTemplePosition(); }
-	Town* getTown() const { return town; }
-	void setTown(Town* town) { this->town = town; }
+	const Position& getTemplePosition() const { return town->templePosition; }
+	const Town* getTown() const { return town; }
+	void setTown(const Town* town) { this->town = town; }
 
 	bool isPushable() const override;
 	uint32_t isMuted() const;
@@ -1048,7 +1048,7 @@ private:
 	Party* party = nullptr;
 	Player* tradePartner = nullptr;
 	SchedulerTask* walkTask = nullptr;
-	Town* town = nullptr;
+	const Town* town = nullptr;
 	Vocation* vocation = nullptr;
 	DepotLocker_ptr depotLocker = nullptr;
 

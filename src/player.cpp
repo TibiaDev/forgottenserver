@@ -1932,7 +1932,7 @@ Connection::Address Player::getIP() const
 
 void Player::death(Creature* lastHitCreature)
 {
-	loginPosition = town->getTemplePosition();
+	loginPosition = town->templePosition;
 
 	if (skillLoss) {
 		uint8_t unfairFightReduction = 100;
@@ -3720,8 +3720,8 @@ bool Player::canWear(uint32_t lookType, uint8_t addons) const
 		return true;
 	}
 
-	for (auto& [outfit, addon] : outfits) {
-		if (outfit == lookType) {
+	for (auto& [outfitType, addon] : outfits) {
+		if (outfitType == lookType) {
 			if (addon == addons || addon == 3 || addons == 0) {
 				return true;
 			}
@@ -3742,8 +3742,8 @@ bool Player::hasOutfit(uint32_t lookType, uint8_t addons)
 		return true;
 	}
 
-	for (auto& [outfit, addon] : outfits) {
-		if (outfit == lookType) {
+	for (auto& [outfitType, addon] : outfits) {
+		if (outfitType == lookType) {
 			if (addon == addons || addon == 3 || addons == 0) {
 				return true;
 			}
