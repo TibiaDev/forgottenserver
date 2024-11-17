@@ -1324,7 +1324,12 @@ void ProtocolGame::sendCreatureLight(const Creature* creature)
 	}
 
 	NetworkMessage msg;
-	AddCreatureLight(msg, creature);
+	msg.addByte(0x8D);
+	msg.add<uint32_t>(creature->getID());
+
+	auto&& [level, color] = creature->getCreatureLight();
+	msg.addByte((player->isAccessPlayer() ? 0xFF : level));
+	msg.addByte(color);
 	writeToOutputBuffer(msg);
 }
 
