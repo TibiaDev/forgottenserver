@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  build:
+    image: tfs-1.4.3-build
+    container_name: tfs-1.4.3-build
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: build
+    volumes:
+      - ./build:/usr/src/forgottenserver/build
+
+  app:
+    image: tfs-1.4.3-runtime
+    container_name: tfs-1.4.3-runtime
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    ports:
+      - "7171:7171"
+      - "7172:7172"
+    volumes:
+      - ./data:/srv/data
+      - ./:/srv
+    working_dir: /srv
+    entrypoint: ["/bin/tfs"]
