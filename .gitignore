@@ -181,3 +181,4 @@ pip-log.txt
 ## TFS / OT
 #############
 config.lua
+/vcpkg_installed/x64-windows
