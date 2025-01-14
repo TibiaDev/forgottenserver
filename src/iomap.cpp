@@ -80,29 +80,29 @@ bool IOMap::loadMap(Map* map, const std::string& fileName)
 			return false;
 		}
 
-		if (headerVersion > 2) {
-			setLastErrorString("Unknown OTBM version detected.");
+		/*if (headerVersion > 2) {
+			setLastErrorString("Unknown OTBM version detected. " + headerVersion);
 			return false;
 		}
 
 		if (root_header.majorVersionItems < 3) {
 			setLastErrorString("This map need to be upgraded by using the latest map editor version to be able to load correctly.");
 			return false;
-		}
+		}*/
 
-		if (root_header.majorVersionItems > Item::items.majorVersion) {
+		/*if (root_header.majorVersionItems > Item::items.majorVersion) {
 			setLastErrorString("The map was saved with a different items.otb version, an upgraded items.otb is required.");
 			return false;
-		}
+		}*/
 
-		if (root_header.minorVersionItems < CLIENT_VERSION_810) {
+		/*if (root_header.minorVersionItems < CLIENT_VERSION_810) {
 			setLastErrorString("This map needs to be updated.");
 			return false;
-		}
+		}*/
 
-		if (root_header.minorVersionItems > Item::items.minorVersion) {
+		/*if (root_header.minorVersionItems > Item::items.minorVersion) {
 			std::cout << "[Warning - IOMap::loadMap] This map needs an updated items.otb." << std::endl;
-		}
+		}*/
 
 		std::cout << "> Map size: " << root_header.width << "x" << root_header.height << '.' << std::endl;
 		map->width = root_header.width;
@@ -285,7 +285,8 @@ bool IOMap::parseTileArea(OTB::Loader& loader, const OTB::Node& tileAreaNode, Ma
 					Item* item = Item::CreateItem(propStream);
 					if (!item) {
 						setLastErrorString(fmt::format("[x:{:d}, y:{:d}, z:{:d}] Failed to create item.", x, y, z));
-						return false;
+						break;
+						//return false;
 					}
 
 					if (isHouseTile && item->isMoveable()) {

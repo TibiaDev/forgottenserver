@@ -554,6 +554,50 @@ enum ReloadTypes_t : uint8_t  {
 	RELOAD_TYPE_WEAPONS,
 };
 
+enum DatAttr : uint8_t {
+	DatAttrGround = 0,
+	DatAttrClip = 1,
+	DatAttrBottom = 2,
+	DatAttrTop = 3,
+	DatAttrContainer = 4,
+	DatAttrStackable = 5,
+	DatAttrForceUse = 6,
+	DatAttrUsable = 254,
+	DatAttrMultiUse = 7,
+	DatAttrWriteable = 8,
+	DatAttrWriteableOnce = 9,
+	DatAttrLiquidContainer = 10,
+	DatAttrLiquidPool = 11,
+	DatAttrImpassable = 12,
+	DatAttrUnmovable = 13,
+	DatAttrBlocksSight = 14,
+	DatAttrBlocksPathfinding = 15,
+	DatAttrNoMovementAnimation = 16,
+	DatAttrPickupable = 17,
+	DatAttrHangable = 18,
+	DatAttrHooksSouth = 19,
+	DatAttrHooksEast = 20,
+	DatAttrRotateable = 21,
+	DatAttrLightSource = 22,
+	DatAttrAlwaysSeen = 23,
+	DatAttrTranslucent = 24,
+	DatAttrDisplaced = 25,
+	DatAttrElevated = 26,
+	DatAttrLyingObject = 27,
+	DatAttrAlwaysAnimated = 28,
+	DatAttrMinimapColor = 29,
+	DatAttrHelpInfo = 30,
+	DatAttrFullTile = 31,
+	DatAttrLookthrough = 32,
+	DatAttrClothes = 33,
+	DatAttrMarket = 34,
+	DatAttrDefaultAction = 35,
+	DatAttrWrappable = 36,
+	DatAttrUnWrappable = 37,
+	DatAttrTopEffect = 38,
+	DatAttrDefault = 255
+};
+
 static constexpr int32_t CHANNEL_GUILD = 0x00;
 static constexpr int32_t CHANNEL_PARTY = 0x01;
 static constexpr int32_t CHANNEL_PRIVATE = 0xFFFF;

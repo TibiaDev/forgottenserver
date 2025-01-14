@@ -390,6 +390,7 @@ class Items
 		void clear();
 
 		bool loadFromOtb(const std::string& file);
+		bool loadFromDat(const std::string& file);
 
 		const ItemType& operator[](size_t id) const {
 			return getItemType(id);

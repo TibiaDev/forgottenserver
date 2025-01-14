@@ -91,6 +91,7 @@ Item* Item::CreateItem(PropStream& propStream)
 	if (!propStream.read<uint16_t>(id)) {
 		return nullptr;
 	}
+	//std::cout << "[ItemId]: " << id << std::endl;
 
 	switch (id) {
 		case ITEM_FIREFIELD_PVP_FULL:
