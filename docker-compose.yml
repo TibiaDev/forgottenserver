@@ -1,28 +1,41 @@
-version: "3.9"
-
 services:
-  build:
-    image: tfs-1.4.3-build
-    container_name: tfs-1.4.3-build
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: build
+  mysql:
+    container_name: mysql-tfs143
+    image: mysql:8.0
+    restart: always
+    command: [ "--default-authentication-plugin=mysql_native_password" ]
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: tfs143
+      MYSQL_USER: tfs143
+      MYSQL_PASSWORD: tfs143
+    ports:
+      - "3306:3306"
     volumes:
-      - ./build:/usr/src/forgottenserver/build
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+      - ./seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
+      - mysql-data:/var/lib/mysql
+    networks:
+      - tfs143-net
 
-  app:
-    image: tfs-1.4.3-runtime
-    container_name: tfs-1.4.3-runtime
+  server:
+    container_name: server-tfs143
     build:
       context: .
-      dockerfile: Dockerfile
-      target: runtime
+    restart: always
     ports:
       - "7171:7171"
       - "7172:7172"
     volumes:
-      - ./data:/srv/data
-      - ./:/srv
-    working_dir: /srv
-    entrypoint: ["/bin/tfs"]
+      - .:/srv
+    networks:
+      - tfs143-net
+    depends_on:
+      - mysql
+
+volumes:
+  mysql-data:
+
+networks:
+  tfs143-net:
+    driver: bridge

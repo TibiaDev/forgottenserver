@@ -1,57 +1,80 @@
 # Stage 1: Build
-FROM alpine:3.19 AS build
-# install libs
-RUN apk add --no-cache \
-  binutils \
-  boost-dev \
-  build-base \
-  clang \
-  cmake \
-  crypto++-dev \
-  fmt-dev \
-  gcc \
-  gmp-dev \
-  luajit-dev \
-  make \
-  mariadb-connector-c-dev \
-  pugixml-dev
+FROM ubuntu:24.04 AS build
 
-# Copy source files
-COPY cmake /usr/src/forgottenserver/cmake/
-COPY src /usr/src/forgottenserver/src/
-COPY CMakeLists.txt /usr/src/forgottenserver/
+ENV DEBIAN_FRONTEND=noninteractive
+ENV BUILD_SERVER_ONLY=1
+ENV VCPKG_ROOT=/opt/vcpkg
+ENV VCPKG_DEFAULT_TRIPLET=x64-linux-release
+ENV VCPKG_DEFAULT_BINARY_CACHE=/opt/vcpkg/vcpkg-binary
+ENV VCPKG_INSTALLED_DIR=/opt/vcpkg/vcpkg_installed
 
-# Build the project
+# Instala ferramentas essenciais
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    clang \
+    cmake \
+    curl \
+    git \
+    unzip \
+    zip \
+    pkg-config \
+    ca-certificates \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instala o vcpkg
+WORKDIR /opt
+RUN git clone https://github.com/microsoft/vcpkg.git && \
+    ./vcpkg/bootstrap-vcpkg.sh
+
+ENV PATH="${VCPKG_ROOT}:${PATH}"
+ENV CMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
+
+# Copia arquivos do projeto
+WORKDIR /usr/src/forgottenserver
+COPY vcpkg.json CMakeLists.txt ./
+COPY cmake ./cmake
+COPY src ./src
+
+# Cria diretórios de cache
+RUN mkdir -p ${VCPKG_DEFAULT_BINARY_CACHE} ${VCPKG_INSTALLED_DIR}
+
+# Instala as dependências do vcpkg com cache de binário e installed
+RUN --mount=type=cache,target=${VCPKG_INSTALLED_DIR} \
+    --mount=type=cache,target=${VCPKG_DEFAULT_BINARY_CACHE} \
+    ${VCPKG_ROOT}/vcpkg install
+
+# Build com cache
 WORKDIR /usr/src/forgottenserver/build
-RUN cmake .. && make
+RUN rm -rf ./* || true
 
-# Stage 2: Runtime
-FROM alpine:3.19.0 AS runtime
-# install libs
-RUN apk add --no-cache \
-  boost-iostreams \
-  boost-system \
-  boost-filesystem \
-  crypto++ \
-  fmt \
-  gmp \
-  luajit \
-  mariadb-connector-c \
-  pugixml
+RUN --mount=type=cache,target=${VCPKG_INSTALLED_DIR} \
+    cmake .. \
+      -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} \
+      -DVCPKG_TARGET_TRIPLET=${VCPKG_DEFAULT_TRIPLET} \
+      -DVCPKG_INSTALLED_DIR=${VCPKG_INSTALLED_DIR} \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DVCPKG_BUILD_TYPE=release \
+ && cmake --build . -- -j$(nproc)
 
-# Copy the built binary from the build stage
+# Stage 2: Runtime (mínimo)
+FROM ubuntu:24.04 AS runtime
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libssl3 libmariadb3 libluajit-5.1-2 libfmt-dev libcrypto++8 \
+    libboost-iostreams1.74.0 libboost-system1.74.0 libboost-filesystem1.74.0 \
+    libboost-locale1.74.0 libpugixml1v5 ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /usr/src/forgottenserver/build/tfs /bin/tfs
 
-# Copy configuration and data files
 COPY data /srv/data/
 COPY LICENSE README.md *.dist *.sql key.pem config.lua /srv/
 
-# Expose the necessary ports
 EXPOSE 7171 7172
-
-# Set working directory and volumes
 WORKDIR /srv
 VOLUME /srv
-
-# Define the entrypoint
 ENTRYPOINT ["/bin/tfs"]
